@@ -463,13 +463,26 @@ const StudentView = ({ onHome }) => {
       });
     }
     const slips = printRef.current.querySelectorAll(".slip");
+    // A4 at 300dpi = 2480 x 3508px. We render at 620px width * scale 4 = 2480px
+    const A4_WIDTH = 620;
+    const A4_SCALE = 4;
     for (let i = 0; i < slips.length; i++) {
       const slip = slips[i];
-      // Set fixed A4-proportion width for capture
-      const origWidth = slip.style.width;
-      slip.style.width = "595px";
-      const canvas = await window.html2canvas(slip, { scale: 3, useCORS: true, backgroundColor: "#ffffff", width: 595 });
-      slip.style.width = origWidth;
+      // Clone into hidden off-screen container so user sees no flicker
+      const offscreen = document.createElement("div");
+      offscreen.style.cssText = "position:fixed;left:-9999px;top:0;width:" + A4_WIDTH + "px;background:#fff;z-index:-1;";
+      const clone = slip.cloneNode(true);
+      clone.style.width = A4_WIDTH + "px";
+      clone.style.margin = "0";
+      // Replace /logo.png src with base64 in clone so off-screen render works
+      const imgs = clone.querySelectorAll("img");
+      imgs.forEach(img => { if (img.src.includes("logo")) img.src = SCHOOL_LOGO_B64; });
+      offscreen.appendChild(clone);
+      document.body.appendChild(offscreen);
+      // Wait a frame for layout
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const canvas = await window.html2canvas(clone, { scale: A4_SCALE, useCORS: true, backgroundColor: "#ffffff", width: A4_WIDTH });
+      document.body.removeChild(offscreen);
       const link = document.createElement("a");
       link.download = `MUET_Certificate_${(results[0]?.name || "student").replace(/\s+/g, "_")}_${i + 1}.png`;
       link.href = canvas.toDataURL("image/png");
