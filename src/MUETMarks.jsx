@@ -445,7 +445,7 @@ const StudentView = ({ onHome }) => {
     win.document.write(`<!DOCTYPE html><html><head>
       <title>MUET Result - ${results[0]?.name || ""}</title>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      <style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: 'DM Sans', sans-serif; padding: 40px; background: #fff; } @page { size: A4 portrait; margin: 20mm; } @media print { body { padding: 0; } .no-print { display: none !important; } } .slip { page-break-after: always; max-width: 600px; margin: 0 auto; } .slip:last-child { page-break-after: auto; }</style>
+      <style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: 'DM Sans', sans-serif; padding: 40px; background: #fff; } @page { size: A4 portrait; margin: 0; } @media print { body { padding: 15mm 20mm; } .no-print { display: none !important; } } .slip { page-break-after: always; max-width: 600px; margin: 0 auto; } .slip:last-child { page-break-after: auto; }</style>
     </head><body>${printRef.current.innerHTML.replace(/src="[^"]*logo[^"]*"/g, 'src="' + SCHOOL_LOGO_B64 + '"')}
       <div class="no-print" style="text-align:center;margin-top:32px;"><button onclick="window.print()" style="padding:12px 32px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;color:#fff;background:#2D6A4F;border:none;border-radius:10px;cursor:pointer;">Print</button></div>
     </body></html>`);
@@ -454,7 +454,6 @@ const StudentView = ({ onHome }) => {
 
   const handleDownload = async () => {
     if (!printRef.current) return;
-    // Dynamic import html2canvas
     if (!window.html2canvas) {
       await new Promise((resolve, reject) => {
         const s = document.createElement("script");
@@ -463,11 +462,14 @@ const StudentView = ({ onHome }) => {
         document.head.appendChild(s);
       });
     }
-    // Capture each slip as an image
     const slips = printRef.current.querySelectorAll(".slip");
     for (let i = 0; i < slips.length; i++) {
       const slip = slips[i];
-      const canvas = await window.html2canvas(slip, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      // Set fixed A4-proportion width for capture
+      const origWidth = slip.style.width;
+      slip.style.width = "595px";
+      const canvas = await window.html2canvas(slip, { scale: 3, useCORS: true, backgroundColor: "#ffffff", width: 595 });
+      slip.style.width = origWidth;
       const link = document.createElement("a");
       link.download = `MUET_Certificate_${(results[0]?.name || "student").replace(/\s+/g, "_")}_${i + 1}.png`;
       link.href = canvas.toDataURL("image/png");
