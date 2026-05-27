@@ -463,29 +463,34 @@ const StudentView = ({ onHome }) => {
       });
     }
     const slips = printRef.current.querySelectorAll(".slip");
-    // A4 at 300dpi = 2480 x 3508px. We render at 620px width * scale 4 = 2480px
-    const A4_WIDTH = 620;
-    const A4_SCALE = 4;
+    const A4_W = 2480; const A4_H = 3508; // A4 at 300dpi
+    const RENDER_W = 620; const RENDER_SCALE = 4; // 620 * 4 = 2480
+    const PAD_TOP = 120; // top padding on final canvas
     for (let i = 0; i < slips.length; i++) {
       const slip = slips[i];
-      // Clone into hidden off-screen container so user sees no flicker
       const offscreen = document.createElement("div");
-      offscreen.style.cssText = "position:fixed;left:-9999px;top:0;width:" + A4_WIDTH + "px;background:#fff;z-index:-1;";
+      offscreen.style.cssText = "position:fixed;left:-9999px;top:0;width:" + RENDER_W + "px;background:#fff;z-index:-1;";
       const clone = slip.cloneNode(true);
-      clone.style.width = A4_WIDTH + "px";
+      clone.style.width = RENDER_W + "px";
       clone.style.margin = "0";
-      // Replace /logo.png src with base64 in clone so off-screen render works
       const imgs = clone.querySelectorAll("img");
       imgs.forEach(img => { if (img.src.includes("logo")) img.src = SCHOOL_LOGO_B64; });
       offscreen.appendChild(clone);
       document.body.appendChild(offscreen);
-      // Wait a frame for layout
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const canvas = await window.html2canvas(clone, { scale: A4_SCALE, useCORS: true, backgroundColor: "#ffffff", width: A4_WIDTH });
+      const captured = await window.html2canvas(clone, { scale: RENDER_SCALE, useCORS: true, backgroundColor: "#ffffff", width: RENDER_W });
       document.body.removeChild(offscreen);
+      // Create full A4 canvas and paste content centered horizontally, near top
+      const a4Canvas = document.createElement("canvas");
+      a4Canvas.width = A4_W; a4Canvas.height = A4_H;
+      const ctx = a4Canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, A4_W, A4_H);
+      const xOffset = Math.round((A4_W - captured.width) / 2);
+      ctx.drawImage(captured, xOffset, PAD_TOP);
       const link = document.createElement("a");
       link.download = `MUET_Certificate_${(results[0]?.name || "student").replace(/\s+/g, "_")}_${i + 1}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = a4Canvas.toDataURL("image/png");
       link.click();
     }
   };
