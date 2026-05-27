@@ -454,20 +454,24 @@ const StudentView = ({ onHome }) => {
 
   const handleDownload = async () => {
     if (!printRef.current) return;
-    if (!window.html2canvas) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
-        s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
+    // Load html2canvas + jsPDF
+    const loadScript = (url) => new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = url; s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    if (!window.html2canvas) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    if (!window.jspdf) await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js");
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     const slips = printRef.current.querySelectorAll(".slip");
-    const A4_W = 2480; const A4_H = 3508; // A4 at 300dpi
-    const RENDER_W = 620; const RENDER_SCALE = 4; // 620 * 4 = 2480
-    const PAD_TOP = 120; // top padding on final canvas
+    const RENDER_W = 620;
+
     for (let i = 0; i < slips.length; i++) {
+      if (i > 0) pdf.addPage();
       const slip = slips[i];
+      // Clone off-screen
       const offscreen = document.createElement("div");
       offscreen.style.cssText = "position:fixed;left:-9999px;top:0;width:" + RENDER_W + "px;background:#fff;z-index:-1;";
       const clone = slip.cloneNode(true);
@@ -478,21 +482,19 @@ const StudentView = ({ onHome }) => {
       offscreen.appendChild(clone);
       document.body.appendChild(offscreen);
       await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const captured = await window.html2canvas(clone, { scale: RENDER_SCALE, useCORS: true, backgroundColor: "#ffffff", width: RENDER_W });
+      const canvas = await window.html2canvas(clone, { scale: 3, useCORS: true, backgroundColor: "#ffffff", width: RENDER_W });
       document.body.removeChild(offscreen);
-      // Create full A4 canvas and paste content centered horizontally, near top
-      const a4Canvas = document.createElement("canvas");
-      a4Canvas.width = A4_W; a4Canvas.height = A4_H;
-      const ctx = a4Canvas.getContext("2d");
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, A4_W, A4_H);
-      const xOffset = Math.round((A4_W - captured.width) / 2);
-      ctx.drawImage(captured, xOffset, PAD_TOP);
-      const link = document.createElement("a");
-      link.download = `MUET_Certificate_${(results[0]?.name || "student").replace(/\s+/g, "_")}_${i + 1}.png`;
-      link.href = a4Canvas.toDataURL("image/png");
-      link.click();
+      // Place image on A4 page with margins
+      const imgData = canvas.toDataURL("image/png");
+      const pageW = 210; // A4 width in mm
+      const pageH = 297; // A4 height in mm
+      const margin = 15; // mm
+      const contentW = pageW - (margin * 2);
+      const contentH = (canvas.height / canvas.width) * contentW;
+      pdf.addImage(imgData, "PNG", margin, margin, contentW, contentH);
     }
+
+    pdf.save(`MUET_Certificate_${(results[0]?.name || "student").replace(/\s+/g, "_")}.pdf`);
   };
 
   const grouped = results ? results.reduce((acc, r) => { if (!acc[r.exam]) acc[r.exam] = r; return acc; }, {}) : {};
@@ -611,7 +613,7 @@ const StudentView = ({ onHome }) => {
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <button onClick={handlePrint} style={{ padding: "12px 28px", fontSize: 14, fontFamily: font, fontWeight: 600, color: "#fff", background: colors.accent, border: "none", borderRadius: 10, cursor: "pointer" }}
                 onMouseEnter={(e) => e.target.style.background = colors.accentDark} onMouseLeave={(e) => e.target.style.background = colors.accent}>Print Certificate</button>
-              <button onClick={handleDownload} style={{ padding: "12px 28px", fontSize: 14, fontFamily: font, fontWeight: 600, color: colors.accent, background: "none", border: `1.5px solid ${colors.accent}`, borderRadius: 10, cursor: "pointer" }}>Download Certificate</button>
+              <button onClick={handleDownload} style={{ padding: "12px 28px", fontSize: 14, fontFamily: font, fontWeight: 600, color: colors.accent, background: "none", border: `1.5px solid ${colors.accent}`, borderRadius: 10, cursor: "pointer" }}>Download PDF</button>
             </div>
           </div>
         )}
