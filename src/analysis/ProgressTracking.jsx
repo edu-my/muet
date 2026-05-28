@@ -70,9 +70,9 @@ export default function ProgressTracking({ allStudents, exams, classes }) {
   const bandMovement = (() => {
     if (lastTwo.length < 2) return [];
     const prevMap = {};
-    lastTwo[0].students.forEach(s => { prevMap[(s.ic || s.name || "").toLowerCase()] = s; });
+    lastTwo[0].students.forEach(s => { prevMap[String(s.ic || s.name || "").toLowerCase()] = s; });
     return lastTwo[1].students.map(s => {
-      const key = (s.ic || s.name || "").toLowerCase();
+      const key = String(s.ic || s.name || "").toLowerCase();
       const prev = prevMap[key];
       if (!prev) return null;
       const prevBand = prev.band || "-";

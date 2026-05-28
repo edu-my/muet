@@ -207,7 +207,7 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
               </p>
             )}
           </div>
-          <PageErrorBoundary>
+          <PageErrorBoundary key={page}>
             {renderPage()}
           </PageErrorBoundary>
         </div>
