@@ -1,7 +1,7 @@
 // ============================================================
-// ANALYSIS DASHBOARD - Main wrapper with fixed sidebar
+// ANALYSIS DASHBOARD - Main wrapper with sidebar
 // ============================================================
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { colors, font, displayFont, PageErrorBoundary } from "./shared.jsx";
 import Overview from "./Overview.jsx";
 import StudentProfiles from "./StudentProfiles.jsx";
@@ -9,7 +9,6 @@ import ProgressTracking from "./ProgressTracking.jsx";
 import Intervention from "./Intervention.jsx";
 import Comparative from "./Comparative.jsx";
 
-// -- Navigation items --
 const NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: "M3 3h7v7H3V3zm11 0h7v7h-7V3zm-11 11h7v7H3v-7zm11 0h7v7h-7v-7z" },
   { id: "students", label: "Student Profiles", icon: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 3a4 4 0 100 8 4 4 0 000-8z" },
@@ -31,7 +30,15 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
   const [error, setError] = useState("");
   const [selectedExam, setSelectedExam] = useState("");
   const [selectedClass, setSelectedClass] = useState("all");
+  const contentRef = useRef(null);
 
+  // -- Scroll to top on page change --
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+  }, [page]);
+
+  // -- Fetch data --
   useEffect(() => {
     (async () => {
       try {
@@ -41,14 +48,13 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
         const json = await res.json();
         if (json.success) {
           setData(json);
-          if (json.exams && json.exams.length > 0) setSelectedExam(json.exams[json.exams.length - 1]);
+          if (json.exams?.length > 0) setSelectedExam(json.exams[json.exams.length - 1]);
         } else setError("Failed to load data.");
       } catch (err) { setError("Failed to connect. Please try again."); }
       setLoading(false);
     })();
   }, [appsScriptUrl]);
 
-  // -- Loading --
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center", fontFamily: font }}>
@@ -58,16 +64,13 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
     </div>
   );
 
-  // -- Error --
   if (error) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center", fontFamily: font }}>
         <p style={{ color: colors.error, marginBottom: 12, fontSize: 13 }}>{error}</p>
-        <button onClick={onBack} style={{
-          fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.accent,
-          background: "none", border: `1px solid ${colors.accent}`, borderRadius: 6,
-          padding: "6px 14px", cursor: "pointer",
-        }}>Back to Dashboard</button>
+        <button onClick={onBack} style={{ fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.accent, background: "none", border: `1px solid ${colors.accent}`, borderRadius: 6, padding: "6px 14px", cursor: "pointer" }}>
+          Back to Dashboard
+        </button>
       </div>
     </div>
   );
@@ -78,10 +81,7 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
   const examFiltered = selectedExam ? allStudents.filter(s => s.exam === selectedExam) : allStudents;
   const classFiltered = selectedClass === "all" ? examFiltered : examFiltered.filter(s => s.class === selectedClass);
 
-  const shortExam = (name) => (name || "")
-    .replace("Ujian Bulanan ", "UB ")
-    .replace("Peperiksaan Pertengahan Tahun", "PPT")
-    .replace("Peperiksaan Akhir Tahun", "PAT");
+  const shortExam = (name) => (name || "").replace("Ujian Bulanan ", "UB ").replace("Peperiksaan Pertengahan Tahun", "PPT").replace("Peperiksaan Akhir Tahun", "PAT");
 
   const renderPage = () => {
     switch (page) {
@@ -95,7 +95,6 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
   };
 
   const showFilters = page === "overview" || page === "intervention";
-  const sidebarW = 200;
 
   const selectStyle = {
     width: "100%", padding: "6px 8px", fontSize: 11, fontFamily: font,
@@ -106,12 +105,15 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
   };
 
   return (
-    <div style={{ minHeight: "100vh", fontFamily: font }}>
-      {/* ---- FIXED SIDEBAR ---- */}
+    <div style={{ display: "flex", minHeight: "100vh", fontFamily: font, position: "relative", zIndex: 1 }}>
+
+      {/* ---- SIDEBAR ---- */}
       <div style={{
-        position: "fixed", top: 0, left: 0, bottom: 0, width: sidebarW,
-        background: colors.card, borderRight: `1px solid ${colors.border}`,
-        display: "flex", flexDirection: "column", zIndex: 100, overflowY: "auto",
+        width: 200, flexShrink: 0, background: colors.card,
+        borderRight: `1px solid ${colors.border}`,
+        position: "sticky", top: 0, height: "100vh",
+        display: "flex", flexDirection: "column",
+        overflowY: "auto",
       }}>
         {/* Logo */}
         <div style={{ padding: "14px 14px 12px", borderBottom: `1px solid ${colors.border}`, background: colors.warm }}>
@@ -127,7 +129,7 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
             )}
             <div>
               <p style={{ fontFamily: displayFont, fontSize: 13, fontWeight: 700, color: colors.text, margin: 0, lineHeight: 1.2 }}>MUET Marks</p>
-              <p style={{ fontSize: 9, color: colors.textMuted, margin: "1px 0 0", letterSpacing: "0.03em" }}>Analysis Dashboard</p>
+              <p style={{ fontSize: 9, color: colors.textMuted, margin: "1px 0 0" }}>Analysis Dashboard</p>
             </div>
           </div>
         </div>
@@ -156,7 +158,6 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
             );
           })}
 
-          {/* Filters */}
           {showFilters && (
             <div style={{ marginTop: 10, padding: "10px 0", borderTop: `1px solid ${colors.border}` }}>
               <p style={{ fontSize: 9, fontWeight: 700, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", padding: "0 6px", marginBottom: 6 }}>Filters</p>
@@ -177,7 +178,6 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
           )}
         </div>
 
-        {/* Back */}
         <div style={{ padding: "8px 10px", borderTop: `1px solid ${colors.border}` }}>
           <button onClick={onBack} style={{
             fontSize: 11, fontWeight: 500, color: colors.textMuted,
@@ -195,7 +195,7 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
       </div>
 
       {/* ---- MAIN CONTENT ---- */}
-      <div style={{ marginLeft: sidebarW, minHeight: "100vh" }}>
+      <div ref={contentRef} style={{ flex: 1, minWidth: 0 }}>
         <div style={{ maxWidth: 960, padding: "20px 24px 40px" }}>
           <div style={{ marginBottom: 16 }}>
             <h1 style={{ fontFamily: displayFont, fontSize: 20, fontWeight: 700, color: colors.text, margin: 0 }}>
