@@ -27,7 +27,7 @@ export default function Overview({ students, allStudents, classes }) {
   return (
     <div>
       {/* Stat cards row */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
         <StatCard label="Total students" value={stats.total} />
         <StatCard label="Average score" value={stats.overall} sub={`Band ${stats.band.band}`} color={colors.accent} />
         <StatCard label="Weakest component" value={stats.weakest.name} sub={`${stats.weakest.avg}/90`} color={colors.band1} />
@@ -35,7 +35,7 @@ export default function Overview({ students, allStudents, classes }) {
       </div>
 
       {/* Component averages + Band distribution */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
         <Card>
           <SectionTitle>Component Averages</SectionTitle>
           {stats.components.map(c => (
@@ -48,10 +48,10 @@ export default function Overview({ students, allStudents, classes }) {
           {bandData.length === 0 ? (
             <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted }}>No data</p>
           ) : (
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 160, padding: "0 4px" }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 5, height: 130, padding: "0 4px" }}>
               {bandData.map(b => {
                 const maxCount = Math.max(...bandData.map(x => x.count), 1);
-                const h = (b.count / maxCount) * 130;
+                const h = (b.count / maxCount) * 105;
                 return (
                   <div key={b.band} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%" }}>
                     <span style={{ fontFamily: font, fontSize: 11, fontWeight: 700, color: colors.text, marginBottom: 4 }}>{b.count}</span>
@@ -67,7 +67,7 @@ export default function Overview({ students, allStudents, classes }) {
 
       {/* Class comparison table */}
       {classStats.length > 1 && (
-        <Card style={{ marginBottom: 16 }}>
+        <Card style={{ marginBottom: 12 }}>
           <SectionTitle>Class Comparison</SectionTitle>
           <div style={{ overflow: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -98,9 +98,9 @@ export default function Overview({ students, allStudents, classes }) {
 
       {/* Intervention groups summary */}
       {atRisk.length > 0 && (
-        <Card style={{ marginBottom: 16 }}>
+        <Card style={{ marginBottom: 12 }}>
           <SectionTitle>Intervention Groups (Below Band 3)</SectionTitle>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 12 }}>
             {Object.entries(interventionGroups).map(([comp, group]) => (
               <div key={comp} style={{ textAlign: "center", padding: 12, borderRadius: 10, background: group.length > 0 ? colors.errorBg : colors.warm }}>
                 <p style={{ fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>{comp}</p>

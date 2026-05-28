@@ -129,26 +129,26 @@ export const tdStyle = {
 // -- Shared UI components --
 export const Card = ({ children, style = {} }) => (
   <div style={{
-    background: colors.card, borderRadius: 14, padding: "20px 22px",
+    background: colors.card, borderRadius: 12, padding: "16px 18px",
     border: `1px solid ${colors.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", ...style,
   }}>{children}</div>
 );
 
 export const SectionTitle = ({ children }) => (
   <h3 style={{
-    fontFamily: font, fontSize: 13, fontWeight: 700, color: colors.text,
-    marginBottom: 14, textTransform: "uppercase", letterSpacing: "0.04em",
+    fontFamily: font, fontSize: 12, fontWeight: 700, color: colors.text,
+    marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.04em",
   }}>{children}</h3>
 );
 
 export const StatCard = ({ label, value, sub, color }) => (
   <div style={{
-    flex: "1 1 140px", textAlign: "center", background: colors.card,
-    borderRadius: 12, padding: "16px 14px", border: `1px solid ${colors.border}`,
+    flex: "1 1 120px", textAlign: "center", background: colors.card,
+    borderRadius: 10, padding: "12px 10px", border: `1px solid ${colors.border}`,
   }}>
-    <p style={{ fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>{label}</p>
-    <p style={{ fontFamily: displayFont, fontSize: 26, fontWeight: 700, color: color || colors.text, margin: "4px 0 0" }}>{value}</p>
-    {sub && <p style={{ fontFamily: font, fontSize: 11, color: colors.textMuted, margin: "2px 0 0" }}>{sub}</p>}
+    <p style={{ fontFamily: font, fontSize: 9, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>{label}</p>
+    <p style={{ fontFamily: displayFont, fontSize: 22, fontWeight: 700, color: color || colors.text, margin: "2px 0 0" }}>{value}</p>
+    {sub && <p style={{ fontFamily: font, fontSize: 10, color: colors.textMuted, margin: "1px 0 0" }}>{sub}</p>}
   </div>
 );
 
@@ -164,13 +164,13 @@ export const BandBadge = ({ band }) => {
 };
 
 export const Bar = ({ value, max = 90, color, label }) => (
-  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-    <p style={{ fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.text, width: 70, textAlign: "right", margin: 0 }}>{label}</p>
-    <div style={{ flex: 1, height: 24, background: "#F0F0EC", borderRadius: 6, overflow: "hidden", position: "relative" }}>
-      <div style={{ width: `${(safeNum(value) / max) * 100}%`, height: "100%", background: color, borderRadius: 6, transition: "width 0.6s ease" }} />
-      <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontFamily: font, fontSize: 11, fontWeight: 600, color: safeNum(value) > max * 0.6 ? "#fff" : colors.text }}>{safeNum(value)}</span>
+  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+    <p style={{ fontFamily: font, fontSize: 11, fontWeight: 500, color: colors.text, width: 65, textAlign: "right", margin: 0 }}>{label}</p>
+    <div style={{ flex: 1, height: 20, background: "#F0F0EC", borderRadius: 5, overflow: "hidden", position: "relative" }}>
+      <div style={{ width: `${(safeNum(value) / max) * 100}%`, height: "100%", background: color, borderRadius: 5, transition: "width 0.6s ease" }} />
+      <span style={{ position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)", fontFamily: font, fontSize: 10, fontWeight: 600, color: safeNum(value) > max * 0.6 ? "#fff" : colors.text }}>{safeNum(value)}</span>
     </div>
-    <p style={{ fontFamily: font, fontSize: 10, color: colors.textMuted, width: 30, margin: 0 }}>/{max}</p>
+    <p style={{ fontFamily: font, fontSize: 9, color: colors.textMuted, width: 25, margin: 0 }}>/{max}</p>
   </div>
 );
 
