@@ -2,25 +2,44 @@
 // ANALYSIS - PROGRESS TRACKING PAGE
 // ============================================================
 import { Card, SectionTitle, BandBadge, StatCard, thStyle, tdStyle,
-  colors, font, displayFont, computeStats, getBand, bandColor } from "./shared.jsx";
+  colors, font, displayFont, computeStats, getBand, bandColor, safeNum } from "./shared.jsx";
 
 export default function ProgressTracking({ allStudents, exams, classes }) {
-  if (exams.length < 2) {
+  // -- Guard: ensure data exists --
+  const students = allStudents || [];
+  const examList = exams || [];
+  const classList = classes || [];
+
+  if (examList.length < 2) {
     return (
       <Card>
-        <p style={{ fontFamily: font, fontSize: 14, color: colors.textMuted, textAlign: "center", padding: 30 }}>
-          Progress tracking requires at least 2 exams. Currently only {exams.length} exam{exams.length === 1 ? "" : "s"} submitted.
-        </p>
+        <div style={{ textAlign: "center", padding: 30 }}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke={colors.border} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 12 }}>
+            <path d="M23 6l-9.5 9.5-5-5L1 18" /><path d="M17 6h6v6" />
+          </svg>
+          <p style={{ fontFamily: font, fontSize: 14, color: colors.textMuted, margin: 0 }}>
+            Progress tracking requires at least 2 exams.
+          </p>
+          <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, marginTop: 6, opacity: 0.7 }}>
+            Currently {examList.length} exam{examList.length === 1 ? "" : "s"} submitted.
+          </p>
+        </div>
       </Card>
     );
   }
 
+  // -- Shorten exam name helper --
+  const shortExam = (name) => (name || "")
+    .replace("Ujian Bulanan ", "UB ")
+    .replace("Peperiksaan Pertengahan Tahun", "PPT")
+    .replace("Peperiksaan Akhir Tahun", "PAT");
+
   // -- Stats per exam --
-  const examStats = exams.map(exam => {
-    const students = allStudents.filter(s => s.exam === exam);
-    const stats = computeStats(students);
-    return { exam, stats, students };
-  }).filter(e => e.stats);
+  const examStats = examList.map(exam => {
+    const examStudents = students.filter(s => s.exam === exam);
+    const stats = computeStats(examStudents);
+    return { exam, stats, students: examStudents };
+  }).filter(e => e.stats !== null);
 
   if (examStats.length < 2) {
     return (
@@ -37,12 +56,11 @@ export default function ProgressTracking({ allStudents, exams, classes }) {
 
   // -- Component trends --
   const compTrends = ["Reading", "Listening", "Speaking", "Writing"].map(name => {
-    const key = name === "Reading" ? "t1Score" : name === "Listening" ? "t2Score" : name === "Speaking" ? "t3Score" : "t4Score";
     return {
       name,
       data: examStats.map(e => ({
-        exam: e.exam.replace("Ujian Bulanan ", "UB").replace("Peperiksaan Pertengahan Tahun", "PPT").replace("Peperiksaan Akhir Tahun", "PAT"),
-        avg: e.stats.components.find(c => c.name === name)?.avg || 0,
+        exam: shortExam(e.exam),
+        avg: e.stats?.components?.find(c => c.name === name)?.avg || 0,
       })),
     };
   });
@@ -52,19 +70,20 @@ export default function ProgressTracking({ allStudents, exams, classes }) {
   const bandMovement = (() => {
     if (lastTwo.length < 2) return [];
     const prevMap = {};
-    lastTwo[0].students.forEach(s => { prevMap[(s.ic || s.name).toLowerCase()] = s; });
+    lastTwo[0].students.forEach(s => { prevMap[(s.ic || s.name || "").toLowerCase()] = s; });
     return lastTwo[1].students.map(s => {
-      const key = (s.ic || s.name).toLowerCase();
+      const key = (s.ic || s.name || "").toLowerCase();
       const prev = prevMap[key];
       if (!prev) return null;
-      const prevBand = prev.band;
-      const currBand = s.band;
+      const prevBand = prev.band || "-";
+      const currBand = s.band || "-";
       if (prevBand === currBand) return null;
       return {
         name: s.name, class: s.class,
         prevBand, band: currBand,
-        prevOverall: Math.round(prev.overall), overall: Math.round(s.overall),
-        diff: Math.round(s.overall) - Math.round(prev.overall),
+        prevOverall: Math.round(safeNum(prev.overall)),
+        overall: Math.round(safeNum(s.overall)),
+        diff: Math.round(safeNum(s.overall)) - Math.round(safeNum(prev.overall)),
       };
     }).filter(Boolean).sort((a, b) => b.diff - a.diff);
   })();
@@ -76,10 +95,10 @@ export default function ProgressTracking({ allStudents, exams, classes }) {
         <SectionTitle>Overall Average Trend</SectionTitle>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 12, height: 200, padding: "0 8px" }}>
           {examStats.map((e, i) => {
-            const h = (e.stats.overall / maxOverall) * 170;
-            const prev = i > 0 ? examStats[i - 1].stats.overall : null;
-            const change = prev !== null ? e.stats.overall - prev : null;
-            const shortName = e.exam.replace("Ujian Bulanan ", "UB").replace("Peperiksaan Pertengahan Tahun", "PPT").replace("Peperiksaan Akhir Tahun", "PAT");
+            const overall = e.stats?.overall || 0;
+            const h = (overall / maxOverall) * 170;
+            const prev = i > 0 ? (examStats[i - 1].stats?.overall || 0) : null;
+            const change = prev !== null ? overall - prev : null;
             return (
               <div key={e.exam} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%" }}>
                 {change !== null && (
@@ -87,9 +106,9 @@ export default function ProgressTracking({ allStudents, exams, classes }) {
                     {change >= 0 ? "+" : ""}{change}
                   </span>
                 )}
-                <span style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: colors.text, marginBottom: 4 }}>{e.stats.overall}</span>
+                <span style={{ fontFamily: font, fontSize: 12, fontWeight: 700, color: colors.text, marginBottom: 4 }}>{overall}</span>
                 <div style={{ width: "100%", maxWidth: 50, height: h, background: colors.accent, borderRadius: "6px 6px 0 0", transition: "height 0.5s ease", opacity: 0.7 + (i / examStats.length) * 0.3 }} />
-                <span style={{ fontFamily: font, fontSize: 9, color: colors.textMuted, marginTop: 6, fontWeight: 600, textAlign: "center" }}>{shortName}</span>
+                <span style={{ fontFamily: font, fontSize: 9, color: colors.textMuted, marginTop: 6, fontWeight: 600, textAlign: "center" }}>{shortExam(e.exam)}</span>
               </div>
             );
           })}
@@ -105,9 +124,7 @@ export default function ProgressTracking({ allStudents, exams, classes }) {
               <tr>
                 <th style={{ ...thStyle, textAlign: "left" }}>Component</th>
                 {examStats.map(e => (
-                  <th key={e.exam} style={thStyle}>
-                    {e.exam.replace("Ujian Bulanan ", "UB").replace("Peperiksaan Pertengahan Tahun", "PPT").replace("Peperiksaan Akhir Tahun", "PAT")}
-                  </th>
+                  <th key={e.exam} style={thStyle}>{shortExam(e.exam)}</th>
                 ))}
                 <th style={thStyle}>Trend</th>
               </tr>
@@ -138,7 +155,7 @@ export default function ProgressTracking({ allStudents, exams, classes }) {
       {bandMovement.length > 0 && (
         <Card>
           <SectionTitle>
-            Band Movement ({lastTwo[0].exam.replace("Ujian Bulanan ", "UB").replace("Peperiksaan Pertengahan Tahun", "PPT").replace("Peperiksaan Akhir Tahun", "PAT")} → {lastTwo[1].exam.replace("Ujian Bulanan ", "UB").replace("Peperiksaan Pertengahan Tahun", "PPT").replace("Peperiksaan Akhir Tahun", "PAT")})
+            Band Movement ({shortExam(lastTwo[0].exam)} → {shortExam(lastTwo[1].exam)})
           </SectionTitle>
           <div style={{ overflow: "auto", maxHeight: 350 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -168,6 +185,17 @@ export default function ProgressTracking({ allStudents, exams, classes }) {
                 ))}
               </tbody>
             </table>
+          </div>
+        </Card>
+      )}
+
+      {/* No band changes */}
+      {bandMovement.length === 0 && (
+        <Card>
+          <div style={{ textAlign: "center", padding: 20 }}>
+            <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted }}>
+              No band changes between {shortExam(lastTwo[0].exam)} and {shortExam(lastTwo[1].exam)}.
+            </p>
           </div>
         </Card>
       )}

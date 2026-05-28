@@ -3,7 +3,7 @@
 // ============================================================
 import { useState } from "react";
 import { Card, SectionTitle, BandBadge, StatCard, thStyle, tdStyle,
-  colors, font, displayFont, computeStats, getBand, bandColor, BAND_ORDER, NATIONAL_BENCHMARK } from "./shared.jsx";
+  colors, font, displayFont, computeStats, getBand, bandColor, BAND_ORDER, NATIONAL_BENCHMARK, safeNum } from "./shared.jsx";
 
 const ADMIN_PASSWORD = "admin2026";
 

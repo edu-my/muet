@@ -2,7 +2,7 @@
 // ANALYSIS - OVERVIEW PAGE
 // ============================================================
 import { Card, SectionTitle, StatCard, BandBadge, Bar, thStyle, tdStyle,
-  colors, font, displayFont, computeStats, computeInterventionGroups, computeGapAnalysis, bandColor, BAND_ORDER } from "./shared.jsx";
+  colors, font, displayFont, computeStats, computeInterventionGroups, computeGapAnalysis, bandColor, BAND_ORDER, safeNum } from "./shared.jsx";
 
 export default function Overview({ students, allStudents, classes }) {
   const stats = computeStats(students);

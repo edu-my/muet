@@ -1,7 +1,7 @@
 // ============================================================
 // ANALYSIS MODULE - SHARED UTILITIES, STYLES, COMPONENTS
 // ============================================================
-import { useRef, useEffect } from "react";
+import { Component } from "react";
 
 // -- Design tokens (match MUETMarks.jsx) --
 export const font = `'DM Sans', sans-serif`;
@@ -61,11 +61,17 @@ export const bandColor = (band) => {
   return colors.textMuted;
 };
 
+// -- Safe number helper --
+export const safeNum = (v) => {
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
+};
+
 // -- Stats computation --
 export const computeStats = (students) => {
+  if (!students || students.length === 0) return null;
   const n = students.length;
-  if (n === 0) return null;
-  const avg = (key) => Math.round(students.reduce((s, x) => s + (x[key] || 0), 0) / n);
+  const avg = (key) => Math.round(students.reduce((s, x) => s + safeNum(x[key]), 0) / n);
   const overall = avg("overall");
   const components = [
     { name: "Reading", key: "t1Score", avg: avg("t1Score"), color: colors.reading },
@@ -81,12 +87,13 @@ export const computeStats = (students) => {
 
 export const computeInterventionGroups = (atRiskStudents) => {
   const groups = { Reading: [], Listening: [], Speaking: [], Writing: [] };
+  if (!atRiskStudents) return groups;
   atRiskStudents.forEach(s => {
     const comps = [
-      { name: "Reading", val: s.t1Score || 0 },
-      { name: "Listening", val: s.t2Score || 0 },
-      { name: "Speaking", val: s.t3Score || 0 },
-      { name: "Writing", val: s.t4Score || 0 },
+      { name: "Reading", val: safeNum(s.t1Score) },
+      { name: "Listening", val: safeNum(s.t2Score) },
+      { name: "Speaking", val: safeNum(s.t3Score) },
+      { name: "Writing", val: safeNum(s.t4Score) },
     ].sort((a, b) => a.val - b.val);
     groups[comps[0].name].push(s);
   });
@@ -94,13 +101,14 @@ export const computeInterventionGroups = (atRiskStudents) => {
 };
 
 export const computeGapAnalysis = (students) => {
+  if (!students) return [];
   return students.map(s => {
     const next = getNextBandThreshold(s.overall);
     const comps = [
-      { name: "Reading", val: s.t1Score || 0 },
-      { name: "Listening", val: s.t2Score || 0 },
-      { name: "Speaking", val: s.t3Score || 0 },
-      { name: "Writing", val: s.t4Score || 0 },
+      { name: "Reading", val: safeNum(s.t1Score) },
+      { name: "Listening", val: safeNum(s.t2Score) },
+      { name: "Speaking", val: safeNum(s.t3Score) },
+      { name: "Writing", val: safeNum(s.t4Score) },
     ].sort((a, b) => a.val - b.val);
     return { ...s, nextBand: next, weakestComp: comps[0].name, weakestScore: comps[0].val };
   });
@@ -152,16 +160,48 @@ export const BandBadge = ({ band }) => {
   else if (b >= 3) { bg = "#ECFDF5"; fg = colors.band3; }
   else if (b >= 2) { bg = "#FEF3C7"; fg = colors.band2; }
   else if (b >= 1) { bg = "#FEE2E2"; fg = colors.band1; }
-  return <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700, fontFamily: font, background: bg, color: fg }}>{band}</span>;
+  return <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700, fontFamily: font, background: bg, color: fg }}>{band || "-"}</span>;
 };
 
 export const Bar = ({ value, max = 90, color, label }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-    <p style={{ fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.text, width: 70, textAlign: "right" }}>{label}</p>
+    <p style={{ fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.text, width: 70, textAlign: "right", margin: 0 }}>{label}</p>
     <div style={{ flex: 1, height: 24, background: "#F0F0EC", borderRadius: 6, overflow: "hidden", position: "relative" }}>
-      <div style={{ width: `${(value / max) * 100}%`, height: "100%", background: color, borderRadius: 6, transition: "width 0.6s ease" }} />
-      <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontFamily: font, fontSize: 11, fontWeight: 600, color: value > max * 0.6 ? "#fff" : colors.text }}>{value}</span>
+      <div style={{ width: `${(safeNum(value) / max) * 100}%`, height: "100%", background: color, borderRadius: 6, transition: "width 0.6s ease" }} />
+      <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontFamily: font, fontSize: 11, fontWeight: 600, color: safeNum(value) > max * 0.6 ? "#fff" : colors.text }}>{safeNum(value)}</span>
     </div>
-    <p style={{ fontFamily: font, fontSize: 10, color: colors.textMuted, width: 30 }}>/{max}</p>
+    <p style={{ fontFamily: font, fontSize: 10, color: colors.textMuted, width: 30, margin: 0 }}>/{max}</p>
   </div>
 );
+
+// -- Error boundary to prevent blank pages --
+export class PageErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Card style={{ textAlign: "center", padding: 40 }}>
+          <p style={{ fontFamily: font, fontSize: 14, fontWeight: 600, color: colors.error, marginBottom: 8 }}>Something went wrong</p>
+          <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, marginBottom: 16 }}>
+            {this.state.error?.message || "An unexpected error occurred loading this page."}
+          </p>
+          <button
+            onClick={() => this.setState({ hasError: false, error: null })}
+            style={{
+              fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.accent,
+              background: "none", border: `1px solid ${colors.accent}`, borderRadius: 8,
+              padding: "8px 16px", cursor: "pointer",
+            }}
+          >Try Again</button>
+        </Card>
+      );
+    }
+    return this.props.children;
+  }
+}

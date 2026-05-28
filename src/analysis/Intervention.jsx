@@ -3,7 +3,7 @@
 // ============================================================
 import { useState } from "react";
 import { Card, SectionTitle, BandBadge, Bar, thStyle, tdStyle,
-  colors, font, displayFont, getBand, getNextBandThreshold, computeInterventionGroups, computeStats } from "./shared.jsx";
+  colors, font, displayFont, getBand, getNextBandThreshold, computeInterventionGroups, computeStats, safeNum } from "./shared.jsx";
 
 export default function Intervention({ students, classes }) {
   const [simImprovement, setSimImprovement] = useState(10);
