@@ -113,7 +113,7 @@ export default function StudentProfiles({ allStudents, exams }) {
               </div>
             </div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 14 }}>
               <StatCard label="Overall" value={Math.round(safeNum(latest.overall))} sub="/360" color={colors.accent} />
               <StatCard label="Reading" value={Math.round(safeNum(latest.t1Score))} sub="/90" />
               <StatCard label="Listening" value={Math.round(safeNum(latest.t2Score))} sub="/90" />

@@ -143,7 +143,7 @@ export const SectionTitle = ({ children }) => (
 
 export const StatCard = ({ label, value, sub, color }) => (
   <div style={{
-    flex: "1 1 120px", textAlign: "center", background: colors.card,
+    textAlign: "center", background: colors.card,
     borderRadius: 10, padding: "12px 10px", border: `1px solid ${colors.border}`,
   }}>
     <p style={{ fontFamily: font, fontSize: 9, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>{label}</p>
