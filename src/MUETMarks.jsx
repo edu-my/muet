@@ -50,8 +50,8 @@ const calcScores = (raw) => {
   return { t1Score, t2Score, t3Score, t4Score, overall, band: bandInfo.band, cefr: bandInfo.cefr };
 };
 
-const TEACHERS = ["YENNY MELIZA BINTI PAJIT", "Teacher 2", "Teacher 3"];
-const CLASSES = ["SV 1", "SV 2", "SV 3", "SV 4", "SA 1", "SA 2"];
+const TEACHERS = ["Kenneth Jonathan", "Mohd Najib Norman", "Yenny Meliza Binti Pajit"];
+const CLASSES = ["Sains", "Korporat", "Geo", "KMK", "PSV"];
 const EXAMS = ["Ujian Bulanan 1", "Ujian Bulanan 2", "Ujian Bulanan 3", "Peperiksaan Pertengahan Tahun", "Peperiksaan Akhir Tahun"];
 
 // ============================================================
