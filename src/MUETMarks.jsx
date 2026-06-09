@@ -43,7 +43,7 @@ const getBand = (score) => {
 const calcScores = (raw) => {
   const t1Score = Math.round((raw.rd / 40) * 90);
   const t2Score = Math.round((raw.l / 30) * 90);
-  const t3Score = Math.round(((raw.spId + raw.spGr) / 42) * 90);
+  const t3Score = Math.round(((raw.spId + raw.spGr) / 150) * 90);
   const t4Score = raw.wT1 + raw.wT2;
   const overall = t1Score + t2Score + t3Score + t4Score;
   const bandInfo = getBand(overall);
