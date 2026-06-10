@@ -51,8 +51,8 @@ const calcScores = (raw) => {
 };
 
 const TEACHERS = ["Gloria M. Mojuga", "Hamidun bin Rahim", "Kenneth Jonathan", "Lily  Pius", "Mohd Najib Norman", "Yenny Meliza Binti Pajit"];
-const CLASSES = ["Sains", "Korporat", "Geo", "KMK", "PSV"];
-const EXAMS = ["Ujian Bulanan 1", "Ujian Bulanan 2", "Ujian Bulanan 3"];
+const CLASSES = ["SV 1", "SV 2", "SV 3", "SV 4", "SA 1", "SA 2"];
+const EXAMS = ["Ujian Bulanan 1", "Ujian Bulanan 2", "Ujian Bulanan 3", "Peperiksaan Pertengahan Tahun", "Peperiksaan Akhir Tahun"];
 
 // ============================================================
 // XLSX PARSER
@@ -421,6 +421,7 @@ const StudentView = ({ onHome }) => {
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
+  const [selectedExam, setSelectedExam] = useState("");
   const inputRef = useRef(null);
   const printRef = useRef(null);
 
@@ -428,6 +429,7 @@ const StudentView = ({ onHome }) => {
 
   const handleSearch = async (e) => {
     e.preventDefault();
+    setSelectedExam("");
     if (!ic.trim()) return;
     setSearching(true); setError(""); setResults(null);
     try {
@@ -499,6 +501,15 @@ const StudentView = ({ onHome }) => {
   };
 
   const grouped = results ? results.reduce((acc, r) => { if (!acc[r.exam]) acc[r.exam] = r; return acc; }, {}) : {};
+  const examNames = Object.keys(grouped);
+
+  // Auto-select first exam when results load
+  useEffect(() => {
+    if (examNames.length > 0 && !selectedExam) setSelectedExam(examNames[0]);
+  }, [results]);
+
+  // Only show the selected exam's certificate
+  const filteredEntries = selectedExam ? Object.entries(grouped).filter(([name]) => name === selectedExam) : [];
 
   return (
     <div style={{ minHeight: "100vh", position: "relative", zIndex: 1 }}>
@@ -527,10 +538,31 @@ const StudentView = ({ onHome }) => {
           {error && <p style={{ fontFamily: font, fontSize: 13, color: colors.error, marginTop: 10 }}>{error}</p>}
         </form>
 
-        {results && (
+        {results && examNames.length > 0 && (
           <div style={{ animation: "fadeUp 0.4s ease" }}>
+
+            {/* Exam toggle buttons */}
+            {examNames.length > 1 && (
+              <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
+                {examNames.map((name) => {
+                  const active = name === selectedExam;
+                  const short = name.replace("Ujian Bulanan ", "UB ").replace("Peperiksaan Pertengahan Tahun", "PPT").replace("Peperiksaan Akhir Tahun", "PAT");
+                  return (
+                    <button key={name} onClick={() => setSelectedExam(name)}
+                      style={{
+                        padding: "8px 16px", fontSize: 13, fontFamily: font, fontWeight: active ? 600 : 400,
+                        color: active ? "#fff" : colors.textMuted,
+                        background: active ? colors.accent : colors.card,
+                        border: `1.5px solid ${active ? colors.accent : colors.border}`,
+                        borderRadius: 8, cursor: "pointer", transition: "all 0.2s",
+                      }}>{short}</button>
+                  );
+                })}
+              </div>
+            )}
+
             <div ref={printRef}>
-              {Object.entries(grouped).map(([examName, r]) => (
+              {filteredEntries.map(([examName, r]) => (
                 <div key={examName} className="slip" style={{ background: "#fff", padding: "56px 48px 48px", marginBottom: 24, fontFamily: font, position: "relative", overflow: "hidden" }}>
                   {/* Green accent bar at top */}
                   <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: `linear-gradient(90deg, ${colors.accent}, ${colors.accentLight})` }} />
