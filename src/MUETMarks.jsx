@@ -52,7 +52,7 @@ const calcScores = (raw) => {
 
 const TEACHERS = ["Gloria M. Mojuga", "Hamidun bin Rahim", "Kenneth Jonathan", "Lily  Pius", "Mohd Najib Norman", "Yenny Meliza Binti Pajit"];
 const CLASSES = ["Sains", "Korporat", "Geo", "KMK", "PSV"];
-const EXAMS = ["Ujian Bulanan 1", "Ujian Bulanan 2", "Ujian Bulanan 3", "Peperiksaan Pertengahan Tahun", "Peperiksaan Akhir Tahun"];
+const EXAMS = ["Ujian Bulanan 1", "Ujian Bulanan 2", "Ujian Bulanan 3"];
 
 // ============================================================
 // XLSX PARSER
