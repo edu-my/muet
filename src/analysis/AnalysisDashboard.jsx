@@ -8,6 +8,7 @@ import StudentProfiles from "./StudentProfiles.jsx";
 import ProgressTracking from "./ProgressTracking.jsx";
 import Intervention from "./Intervention.jsx";
 import Comparative from "./Comparative.jsx";
+import Release from "./Release.jsx";
 
 const NAV = [
   { id: "overview", label: "Overview", icon: "M3 3h7v7H3V3zm11 0h7v7h-7V3zm-11 11h7v7H3v-7zm11 0h7v7h-7v-7z" },
@@ -15,6 +16,7 @@ const NAV = [
   { id: "progress", label: "Progress Tracking", icon: "M23 6l-9.5 9.5-5-5L1 18" },
   { id: "intervention", label: "Intervention", icon: "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 8v4M12 16h.01" },
   { id: "comparative", label: "Comparative", icon: "M18 20V10M12 20V4M6 20v-6" },
+  { id: "release", label: "Release Results", icon: "M9 12l2 2 4-4M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" },
 ];
 
 const Icon = ({ d }) => (
@@ -108,6 +110,7 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
         case "progress": return <ProgressTracking allStudents={allStudents} exams={exams} classes={classes} />;
         case "intervention": return <Intervention students={classFiltered} classes={classes} />;
         case "comparative": return <Comparative allStudents={allStudents} exams={exams} classes={classes} />;
+        case "release": return <Release appsScriptUrl={appsScriptUrl} exams={exams} />;
         default: return null;
       }
     } catch(e) {

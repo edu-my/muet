@@ -436,7 +436,15 @@ const StudentView = ({ onHome }) => {
       const url = `${CONFIG.APPS_SCRIPT_URL}?action=student_lookup&ic=${encodeURIComponent(ic.trim())}`;
       const res = await fetch(url);
       const data = await res.json();
-      if (data.success && data.count > 0) setResults(data.results);
+      if (data.success && data.count > 0) {
+        // Filter by released exams
+        const releaseRes = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=get_release`);
+        const releaseData = await releaseRes.json();
+        const releases = (releaseData.success && releaseData.releases) ? releaseData.releases : {};
+        const filtered = data.results.filter(r => releases[r.exam] === true);
+        if (filtered.length > 0) setResults(filtered);
+        else setError("No released results found for this IC number.");
+      }
       else setError("No results found for this IC number.");
     } catch (err) { setError("Failed to fetch results. Please try again."); }
     setSearching(false);
