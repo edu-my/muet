@@ -106,7 +106,7 @@ export default function AnalysisDashboard({ onBack, appsScriptUrl, SchoolLogo })
     try {
       switch (page) {
         case "overview": return <Overview students={classFiltered} allStudents={allStudents} classes={classes} />;
-        case "students": return <StudentProfiles allStudents={allStudents} exams={exams} />;
+        case "students": return <StudentProfiles allStudents={allStudents} exams={exams} classes={classes} />;
         case "progress": return <ProgressTracking allStudents={allStudents} exams={exams} classes={classes} />;
         case "intervention": return <Intervention students={classFiltered} classes={classes} />;
         case "comparative": return <Comparative allStudents={allStudents} exams={exams} classes={classes} />;

@@ -1,144 +1,181 @@
 // ============================================================
 // ANALYSIS - STUDENT PROFILES PAGE
+// Class > Exam > Student ID dropdown flow
 // ============================================================
 import { useState, useMemo } from "react";
 import { Card, SectionTitle, BandBadge, Bar, StatCard, thStyle, tdStyle,
   colors, font, displayFont, getBand, getNextBandThreshold, computeStats, bandColor, safeNum } from "./shared.jsx";
 
-// -- Safe string coercion (handles numbers, null, undefined) --
-const str = (v) => v == null ? "" : String(v);
+var str = function(v) { return v == null ? "" : String(v); };
 
-export default function StudentProfiles({ allStudents, exams }) {
-  const [search, setSearch] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState(null);
+export default function StudentProfiles({ allStudents, exams, classes }) {
+  var [selectedClass, setSelectedClass] = useState("");
+  var [selectedExam, setSelectedExam] = useState("");
+  var [selectedIC, setSelectedIC] = useState("");
 
-  const students = allStudents || [];
-  const examList = exams || [];
+  var students = allStudents || [];
+  var examList = exams || [];
+  var classList = classes || [];
 
-  // -- Search results (deduplicated by IC or name) --
-  const results = useMemo(() => {
-    if (!search || search.length < 2) return [];
-    const q = search.toLowerCase();
-    const seen = new Set();
-    return students.filter(s => {
-      const name = str(s.name).toLowerCase();
-      const ic = str(s.ic).toLowerCase();
-      if (!name.includes(q) && !ic.includes(q)) return false;
-      const key = ic || name;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(0, 20);
-  }, [search, students]);
+  // Derive available exams for selected class
+  var availableExams = useMemo(function() {
+    if (!selectedClass) return [];
+    var exSet = {};
+    students.forEach(function(s) {
+      if (s.class === selectedClass && s.exam) exSet[s.exam] = true;
+    });
+    return examList.filter(function(e) { return exSet[e]; });
+  }, [selectedClass, students, examList]);
 
-  // -- Selected student's exam history --
-  const studentHistory = useMemo(() => {
+  // Derive students for selected class + exam
+  var matchingStudents = useMemo(function() {
+    if (!selectedClass || !selectedExam) return [];
+    return students
+      .filter(function(s) { return s.class === selectedClass && s.exam === selectedExam; })
+      .sort(function(a, b) { return str(a.name).localeCompare(str(b.name)); });
+  }, [selectedClass, selectedExam, students]);
+
+  // Selected student record
+  var selectedStudent = useMemo(function() {
+    if (!selectedIC) return null;
+    return matchingStudents.find(function(s) { return str(s.ic) === selectedIC || str(s.name) === selectedIC; }) || null;
+  }, [selectedIC, matchingStudents]);
+
+  // Exam history for selected student (across all exams)
+  var studentHistory = useMemo(function() {
     if (!selectedStudent) return [];
     return students
-      .filter(s => {
+      .filter(function(s) {
         if (selectedStudent.ic && s.ic) return str(s.ic) === str(selectedStudent.ic);
         return str(s.name) === str(selectedStudent.name);
       })
-      .sort((a, b) => examList.indexOf(a.exam) - examList.indexOf(b.exam));
+      .sort(function(a, b) { return examList.indexOf(a.exam) - examList.indexOf(b.exam); });
   }, [selectedStudent, students, examList]);
 
-  // -- Class average for comparison --
-  const classAvg = useMemo(() => {
-    if (!selectedStudent || studentHistory.length === 0) return null;
-    const latest = studentHistory[studentHistory.length - 1];
-    if (!latest) return null;
-    const classmates = students.filter(s => s.class === latest.class && s.exam === latest.exam);
+  // Class average for comparison
+  var classAvg = useMemo(function() {
+    if (!selectedStudent) return null;
+    var classmates = students.filter(function(s) { return s.class === selectedStudent.class && s.exam === selectedStudent.exam; });
     return computeStats(classmates);
-  }, [selectedStudent, studentHistory, students]);
+  }, [selectedStudent, students]);
 
-  const latest = studentHistory.length > 0 ? studentHistory[studentHistory.length - 1] : null;
-  const nextBand = latest ? getNextBandThreshold(safeNum(latest.overall)) : null;
+  var nextBand = selectedStudent ? getNextBandThreshold(safeNum(selectedStudent.overall)) : null;
+
+  // Reset downstream selections when upstream changes
+  var handleClassChange = function(val) {
+    setSelectedClass(val);
+    setSelectedExam("");
+    setSelectedIC("");
+  };
+
+  var handleExamChange = function(val) {
+    setSelectedExam(val);
+    setSelectedIC("");
+  };
+
+  var shortExam = function(n) { return (n || "").replace("Ujian Bulanan ", "UB ").replace("Peperiksaan Pertengahan Tahun", "PPT").replace("Peperiksaan Akhir Tahun", "PAT"); };
+
+  var selectStyle = {
+    width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font,
+    border: "1.5px solid " + colors.border, borderRadius: 8, background: colors.bg,
+    color: colors.text, outline: "none", boxSizing: "border-box", cursor: "pointer",
+    appearance: "none",
+    backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M2 4l4 4 4-4'/%3E%3C/svg%3E\")",
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
+  };
+
+  var labelStyle = { display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 };
 
   return (
     <div>
-      {/* Search bar */}
-      <Card style={{ marginBottom: 12 }}>
+      {/* Filter dropdowns */}
+      <Card style={{ marginBottom: 14 }}>
         <SectionTitle>Find Student</SectionTitle>
-        <input
-          type="text" placeholder="Search by name or IC number..."
-          value={search} onChange={(e) => { setSearch(e.target.value); setSelectedStudent(null); }}
-          style={{
-            width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font,
-            border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg,
-            color: colors.text, outline: "none", boxSizing: "border-box",
-          }}
-        />
-
-        {/* Search results list */}
-        {results.length > 0 && !selectedStudent && (
-          <div style={{ marginTop: 8, maxHeight: 220, overflowY: "auto" }}>
-            {results.map((s, i) => (
-              <div key={i} onClick={() => { setSelectedStudent(s); setSearch(str(s.name)); }}
-                style={{
-                  padding: "8px 12px", cursor: "pointer", borderRadius: 6,
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                  transition: "background 0.15s",
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = colors.warm}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-              >
-                <div>
-                  <p style={{ fontFamily: font, fontSize: 13, fontWeight: 500, color: colors.text, margin: 0 }}>{s.name}</p>
-                  <p style={{ fontFamily: font, fontSize: 11, color: colors.textMuted, margin: "2px 0 0" }}>{s.class}{s.ic ? ` \u00B7 ${s.ic}` : ""}</p>
-                </div>
-                <BandBadge band={s.band} />
-              </div>
-            ))}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+          {/* Class */}
+          <div>
+            <label style={labelStyle}>Class</label>
+            <select value={selectedClass} onChange={function(e) { handleClassChange(e.target.value); }} style={selectStyle}>
+              <option value="">Select class...</option>
+              {classList.map(function(c) { return <option key={c} value={c}>{c}</option>; })}
+            </select>
           </div>
+
+          {/* Exam */}
+          <div>
+            <label style={labelStyle}>Exam</label>
+            <select value={selectedExam} onChange={function(e) { handleExamChange(e.target.value); }} style={selectStyle} disabled={!selectedClass}>
+              <option value="">Select exam...</option>
+              {availableExams.map(function(ex) { return <option key={ex} value={ex}>{shortExam(ex)}</option>; })}
+            </select>
+          </div>
+
+          {/* Student */}
+          <div>
+            <label style={labelStyle}>Student</label>
+            <select value={selectedIC} onChange={function(e) { setSelectedIC(e.target.value); }} style={selectStyle} disabled={!selectedExam}>
+              <option value="">Select student...</option>
+              {matchingStudents.map(function(s, i) {
+                var key = str(s.ic) || str(s.name);
+                return <option key={i} value={key}>{s.name}{s.ic ? " (" + s.ic + ")" : ""}</option>;
+              })}
+            </select>
+          </div>
+        </div>
+
+        {/* Quick summary */}
+        {selectedClass && selectedExam && (
+          <p style={{ fontFamily: font, fontSize: 11, color: colors.textMuted, marginTop: 10 }}>
+            {matchingStudents.length} student{matchingStudents.length !== 1 ? "s" : ""} in {selectedClass}, {shortExam(selectedExam)}
+          </p>
         )}
       </Card>
 
       {/* Student profile detail */}
-      {selectedStudent && latest && (
+      {selectedStudent && (
         <>
-          {/* Current scores */}
           <Card style={{ marginBottom: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
               <div>
-                <h2 style={{ fontFamily: displayFont, fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>{latest.name}</h2>
+                <h2 style={{ fontFamily: displayFont, fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>{selectedStudent.name}</h2>
                 <p style={{ fontFamily: font, fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
-                  {latest.class}{latest.ic ? ` \u00B7 ${latest.ic}` : ""}{latest.exam ? ` \u00B7 ${latest.exam}` : ""}
+                  {selectedStudent.class}{selectedStudent.ic ? " \u00B7 " + selectedStudent.ic : ""}{selectedStudent.exam ? " \u00B7 " + shortExam(selectedStudent.exam) : ""}
                 </p>
               </div>
               <div style={{ textAlign: "center" }}>
-                <p style={{ fontFamily: displayFont, fontSize: 28, fontWeight: 700, color: bandColor(latest.band), margin: 0 }}>
-                  {latest.band || "-"}
+                <p style={{ fontFamily: displayFont, fontSize: 28, fontWeight: 700, color: bandColor(selectedStudent.band), margin: 0 }}>
+                  {selectedStudent.band || "-"}
                 </p>
                 <p style={{ fontFamily: font, fontSize: 9, color: colors.textMuted }}>Band</p>
               </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 8, marginBottom: 14 }}>
-              <StatCard label="Overall" value={Math.round(safeNum(latest.overall))} sub="/360" color={colors.accent} />
-              <StatCard label="Reading" value={Math.round(safeNum(latest.t1Score))} sub="/90" />
-              <StatCard label="Listening" value={Math.round(safeNum(latest.t2Score))} sub="/90" />
-              <StatCard label="Speaking" value={Math.round(safeNum(latest.t3Score))} sub="/90" />
-              <StatCard label="Writing" value={Math.round(safeNum(latest.t4Score))} sub="/90" />
+              <StatCard label="Overall" value={Math.round(safeNum(selectedStudent.overall))} sub="/360" color={colors.accent} />
+              <StatCard label="Reading" value={Math.round(safeNum(selectedStudent.t1Score))} sub="/90" />
+              <StatCard label="Listening" value={Math.round(safeNum(selectedStudent.t2Score))} sub="/90" />
+              <StatCard label="Speaking" value={Math.round(safeNum(selectedStudent.t3Score))} sub="/90" />
+              <StatCard label="Writing" value={Math.round(safeNum(selectedStudent.t4Score))} sub="/90" />
             </div>
 
-            {/* Component bars vs class average */}
+            {/* vs Class Average */}
             {classAvg && classAvg.components && (
               <>
                 <SectionTitle>vs Class Average</SectionTitle>
                 {[
-                  { name: "Reading", studentVal: safeNum(latest.t1Score), classVal: classAvg.components[0]?.avg || 0 },
-                  { name: "Listening", studentVal: safeNum(latest.t2Score), classVal: classAvg.components[1]?.avg || 0 },
-                  { name: "Speaking", studentVal: safeNum(latest.t3Score), classVal: classAvg.components[2]?.avg || 0 },
-                  { name: "Writing", studentVal: safeNum(latest.t4Score), classVal: classAvg.components[3]?.avg || 0 },
-                ].map(c => {
-                  const sv = Math.round(c.studentVal);
-                  const diff = sv - c.classVal;
+                  { name: "Reading", studentVal: safeNum(selectedStudent.t1Score), classVal: (classAvg.components[0] || {}).avg || 0 },
+                  { name: "Listening", studentVal: safeNum(selectedStudent.t2Score), classVal: (classAvg.components[1] || {}).avg || 0 },
+                  { name: "Speaking", studentVal: safeNum(selectedStudent.t3Score), classVal: (classAvg.components[2] || {}).avg || 0 },
+                  { name: "Writing", studentVal: safeNum(selectedStudent.t4Score), classVal: (classAvg.components[3] || {}).avg || 0 },
+                ].map(function(c) {
+                  var sv = Math.round(c.studentVal);
+                  var diff = sv - c.classVal;
                   return (
                     <div key={c.name} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                       <p style={{ fontFamily: font, fontSize: 11, fontWeight: 500, width: 65, textAlign: "right", margin: 0 }}>{c.name}</p>
                       <div style={{ flex: 1, height: 20, background: "#F0F0EC", borderRadius: 5, overflow: "hidden", position: "relative" }}>
-                        <div style={{ width: `${(sv / 90) * 100}%`, height: "100%", background: diff >= 0 ? colors.accent : colors.band1, borderRadius: 5, transition: "width 0.6s ease" }} />
-                        <div style={{ position: "absolute", left: `${(c.classVal / 90) * 100}%`, top: 0, bottom: 0, width: 2, background: colors.text, opacity: 0.3 }} />
+                        <div style={{ width: (sv / 90) * 100 + "%", height: "100%", background: diff >= 0 ? colors.accent : colors.band1, borderRadius: 5, transition: "width 0.6s ease" }} />
+                        <div style={{ position: "absolute", left: (c.classVal / 90) * 100 + "%", top: 0, bottom: 0, width: 2, background: colors.text, opacity: 0.3 }} />
                       </div>
                       <span style={{ fontFamily: font, fontSize: 10, fontWeight: 600, width: 50, color: diff >= 0 ? colors.accent : colors.band1 }}>
                         {sv} ({diff >= 0 ? "+" : ""}{diff})
@@ -167,14 +204,14 @@ export default function StudentProfiles({ allStudents, exams }) {
                     Needs <strong>{nextBand.needed}</strong> more marks to reach Band {nextBand.band}
                   </p>
                   <p style={{ fontFamily: font, fontSize: 11, color: colors.textMuted, marginTop: 2 }}>
-                    Current: {Math.round(safeNum(latest.overall))}/360
+                    Current: {Math.round(safeNum(selectedStudent.overall))}/360
                   </p>
                 </div>
               </div>
             </Card>
           )}
 
-          {/* Exam history table */}
+          {/* Exam history */}
           {studentHistory.length > 1 && (
             <Card>
               <SectionTitle>Exam History</SectionTitle>
@@ -182,26 +219,26 @@ export default function StudentProfiles({ allStudents, exams }) {
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
                     <tr>
-                      {["Exam", "Reading", "Listening", "Speaking", "Writing", "Overall", "Band", "Change"].map(h => (
-                        <th key={h} style={{ ...thStyle, textAlign: h === "Exam" ? "left" : "center" }}>{h}</th>
-                      ))}
+                      {["Exam", "Reading", "Listening", "Speaking", "Writing", "Overall", "Band", "Change"].map(function(h) {
+                        return <th key={h} style={Object.assign({}, thStyle, { textAlign: h === "Exam" ? "left" : "center" })}>{h}</th>;
+                      })}
                     </tr>
                   </thead>
                   <tbody>
-                    {studentHistory.map((r, idx) => {
-                      const prev = idx > 0 ? studentHistory[idx - 1] : null;
-                      const change = prev ? Math.round(safeNum(r.overall)) - Math.round(safeNum(prev.overall)) : null;
+                    {studentHistory.map(function(r, idx) {
+                      var prev = idx > 0 ? studentHistory[idx - 1] : null;
+                      var change = prev ? Math.round(safeNum(r.overall)) - Math.round(safeNum(prev.overall)) : null;
                       return (
-                        <tr key={idx}>
-                          <td style={{ ...tdStyle, textAlign: "left", fontWeight: 500, fontSize: 11 }}>{r.exam}</td>
+                        <tr key={idx} style={{ background: r.exam === selectedExam ? "rgba(45,106,79,0.04)" : "transparent" }}>
+                          <td style={Object.assign({}, tdStyle, { textAlign: "left", fontWeight: 500, fontSize: 11 })}>{shortExam(r.exam)}</td>
                           <td style={tdStyle}>{Math.round(safeNum(r.t1Score))}</td>
                           <td style={tdStyle}>{Math.round(safeNum(r.t2Score))}</td>
                           <td style={tdStyle}>{Math.round(safeNum(r.t3Score))}</td>
                           <td style={tdStyle}>{Math.round(safeNum(r.t4Score))}</td>
-                          <td style={{ ...tdStyle, fontWeight: 700 }}>{Math.round(safeNum(r.overall))}</td>
+                          <td style={Object.assign({}, tdStyle, { fontWeight: 700 })}>{Math.round(safeNum(r.overall))}</td>
                           <td style={tdStyle}><BandBadge band={r.band} /></td>
-                          <td style={{ ...tdStyle, fontWeight: 600, color: change === null ? colors.textMuted : change >= 0 ? colors.accent : colors.band1 }}>
-                            {change === null ? "-" : `${change >= 0 ? "+" : ""}${change}`}
+                          <td style={Object.assign({}, tdStyle, { fontWeight: 600, color: change === null ? colors.textMuted : change >= 0 ? colors.accent : colors.band1 })}>
+                            {change === null ? "-" : (change >= 0 ? "+" : "") + change}
                           </td>
                         </tr>
                       );
@@ -214,24 +251,15 @@ export default function StudentProfiles({ allStudents, exams }) {
         </>
       )}
 
-      {/* Empty state */}
-      {!selectedStudent && results.length === 0 && search.length >= 2 && (
-        <Card>
-          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, textAlign: "center", padding: 16 }}>
-            No students found matching "{search}"
-          </p>
-        </Card>
-      )}
-
       {/* Initial state */}
-      {!selectedStudent && search.length < 2 && (
+      {!selectedStudent && !selectedIC && (
         <Card>
           <div style={{ textAlign: "center", padding: "24px 16px" }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={colors.border} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 8 }}>
               <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
             </svg>
             <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, margin: 0 }}>
-              Type a student's name or IC number to view their profile
+              Select a class, exam, and student above to view their profile
             </p>
           </div>
         </Card>
