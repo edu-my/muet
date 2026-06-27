@@ -202,34 +202,39 @@ const headerBtnStyle = {
 // ============================================================
 // LANDING PAGE
 // ============================================================
-const LandingPage = ({ onTeacher, onStudent }) => {
+const LandingPage = ({ onTeacher, onStudent, onRegister }) => {
   const cardBase = {
     background: colors.card, borderRadius: 16, padding: "36px 28px",
     border: `1px solid ${colors.border}`,
     boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)",
-    cursor: "pointer", transition: "all 0.2s", textAlign: "center", flex: "1 1 260px", maxWidth: 320,
+    cursor: "pointer", transition: "all 0.2s", textAlign: "center", flex: "1 1 200px", maxWidth: 280,
   };
+  const hoverIn = (e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(45,106,79,0.12)"; };
+  const hoverOut = (e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)"; };
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 24, position: "relative", zIndex: 1 }}>
       <Logo size="large" />
-      <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center", maxWidth: 680, width: "100%" }}>
-        <div style={cardBase} onClick={onTeacher}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(45,106,79,0.12)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)"; }}>
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center", maxWidth: 900, width: "100%" }}>
+        <div style={cardBase} onClick={onTeacher} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           <div style={{ width: 52, height: 52, borderRadius: 14, background: colors.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
           </div>
           <h2 style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Teacher</h2>
           <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>Upload marks from Excel and submit to the system</p>
         </div>
-        <div style={cardBase} onClick={onStudent}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(45,106,79,0.12)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)"; }}>
+        <div style={cardBase} onClick={onStudent} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           <div style={{ width: 52, height: 52, borderRadius: 14, background: colors.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
           </div>
           <h2 style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Student</h2>
           <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>Look up your results using your IC number</p>
+        </div>
+        <div style={cardBase} onClick={onRegister} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
+          <div style={{ width: 52, height: 52, borderRadius: 14, background: colors.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
+          </div>
+          <h2 style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Register</h2>
+          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>Register for MUET by filling in your details</p>
         </div>
       </div>
       <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, opacity: 0.5, marginTop: 40 }}>MUET Marks &middot; {CONFIG.SCHOOL} &middot; 2026</p>
@@ -412,6 +417,146 @@ const ConfirmDialog = ({ klass, exam, onConfirm, onCancel }) => (
     </div>
   </div>
 );
+
+// ============================================================
+// STUDENT REGISTRATION FORM (public, no login required)
+// ============================================================
+const REGISTER_YEARS = ["2024", "2025", "2026", "2027", "2028"];
+const SEX_OPTIONS = ["Male", "Female"];
+const RACE_OPTIONS = ["Malay", "Chinese", "Indian", "Kadazan", "Dusun", "Bajau", "Murut", "Rungus", "Others"];
+
+const RegisterView = ({ onHome }) => {
+  const emptyForm = { year: "2026", class: "", name: "", ic: "", contact: "", email: "", sex: "", race: "" };
+  const [form, setForm] = useState({ ...emptyForm });
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (field, val) => setForm(prev => ({ ...prev, [field]: val }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.class || !form.year || !form.ic) {
+      setError("Please fill in Year, Class, Name, and IC Number.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({ ...form, action: "save_registration" }),
+      });
+      const data = await res.json();
+      if (data.success) { setDone(true); setForm({ ...emptyForm }); }
+      else setError("Failed to submit. Please try again.");
+    } catch { setError("Network error. Please try again."); }
+    setSaving(false);
+  };
+
+  const inputStyle = {
+    width: "100%", padding: "12px 14px", fontSize: 14, fontFamily: font,
+    border: `1.5px solid ${colors.border}`, borderRadius: 10, background: colors.bg,
+    color: colors.text, outline: "none", boxSizing: "border-box",
+  };
+  const selectStyle = { ...inputStyle, cursor: "pointer", appearance: "none",
+    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")`,
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
+  };
+  const labelStyle = { display: "block", fontFamily: font, fontSize: 11, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 4 };
+
+  if (done) return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", zIndex: 1 }}>
+      <div style={{ textAlign: "center", maxWidth: 420, padding: 24 }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#D1FAE5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px" }}>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2.5" strokeLinecap="round"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="10" /></svg>
+        </div>
+        <h2 style={{ fontFamily: displayFont, fontSize: 22, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Registration Submitted</h2>
+        <p style={{ fontFamily: font, fontSize: 14, color: colors.textMuted, marginBottom: 24, lineHeight: 1.5 }}>Your MUET registration has been submitted successfully. Your teacher will be able to see your details.</p>
+        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+          <button onClick={() => setDone(false)} style={{ fontFamily: font, fontSize: 13, fontWeight: 600, color: colors.accent, background: "none", border: `1.5px solid ${colors.accent}`, borderRadius: 10, padding: "10px 20px", cursor: "pointer" }}>Register Another</button>
+          <button onClick={onHome} style={{ fontFamily: font, fontSize: 13, fontWeight: 600, color: "#fff", background: colors.accent, border: "none", borderRadius: 10, padding: "10px 20px", cursor: "pointer" }}>Back to Home</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: "100vh", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "32px 24px 64px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 28 }}>
+          <SchoolLogo size={40} />
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontFamily: displayFont, fontSize: 22, fontWeight: 700, color: colors.text }}>MUET Registration</h1>
+            <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, marginTop: 1 }}>{CONFIG.SCHOOL}</p>
+          </div>
+          <button onClick={onHome} style={headerBtnStyle}
+            onMouseEnter={(e) => { e.target.style.borderColor = colors.accent; e.target.style.color = colors.accent; }}
+            onMouseLeave={(e) => { e.target.style.borderColor = colors.border; e.target.style.color = colors.textMuted; }}>Home</button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ background: colors.card, borderRadius: 16, padding: "28px", border: `1px solid ${colors.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+          {error && <p style={{ fontFamily: font, fontSize: 13, color: colors.error, marginBottom: 14, padding: "10px 14px", background: colors.errorBg, borderRadius: 8 }}>{error}</p>}
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <label style={labelStyle}>Year *</label>
+              <select value={form.year} onChange={(e) => handleChange("year", e.target.value)} style={selectStyle}>
+                {REGISTER_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Class *</label>
+              <select value={form.class} onChange={(e) => handleChange("class", e.target.value)} style={selectStyle}>
+                <option value="">Select class...</option>
+                {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={labelStyle}>Full Name *</label>
+              <input type="text" value={form.name} onChange={(e) => handleChange("name", e.target.value)} placeholder="Your full name (as in IC)" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>IC Number (No. KP) *</label>
+              <input type="text" value={form.ic} onChange={(e) => handleChange("ic", e.target.value)} placeholder="e.g. 080101-12-1234" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Contact No.</label>
+              <input type="text" value={form.contact} onChange={(e) => handleChange("contact", e.target.value)} placeholder="e.g. 011-12345678" style={inputStyle} />
+            </div>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <label style={labelStyle}>Email</label>
+              <input type="email" value={form.email} onChange={(e) => handleChange("email", e.target.value)} placeholder="your.email@example.com" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Sex</label>
+              <select value={form.sex} onChange={(e) => handleChange("sex", e.target.value)} style={selectStyle}>
+                <option value="">Select...</option>
+                {SEX_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Race</label>
+              <select value={form.race} onChange={(e) => handleChange("race", e.target.value)} style={selectStyle}>
+                <option value="">Select...</option>
+                {RACE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" disabled={saving} style={{
+            width: "100%", marginTop: 20, padding: "14px 0", fontSize: 15, fontFamily: font, fontWeight: 600,
+            color: "#fff", background: colors.accent, border: "none", borderRadius: 10, cursor: "pointer",
+          }}
+            onMouseEnter={(e) => e.target.style.background = colors.accentDark}
+            onMouseLeave={(e) => e.target.style.background = colors.accent}>
+            {saving ? "Submitting..." : "Submit Registration"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 // ============================================================
 // STUDENT VIEW - MPM-style result slip with logo
@@ -745,9 +890,10 @@ export default function MUETMarks() {
       <BgPattern />
       {showConfirm && <ConfirmDialog klass={klass} exam={exam} onConfirm={doSubmit} onCancel={() => setShowConfirm(false)} />}
 
-      {page === "landing" && <LandingPage onTeacher={() => setPage("teacherLogin")} onStudent={() => setPage("student")} />}
+      {page === "landing" && <LandingPage onTeacher={() => setPage("teacherLogin")} onStudent={() => setPage("student")} onRegister={() => setPage("register")} />}
       {page === "teacherLogin" && <TeacherLogin onAuth={() => setPage("teacher")} onBack={() => setPage("landing")} />}
       {page === "student" && <StudentView onHome={goHome} />}
+      {page === "register" && <RegisterView onHome={goHome} />}
       {page === "analysis" && <AnalysisDashboard onBack={() => setPage("teacher")} appsScriptUrl={CONFIG.APPS_SCRIPT_URL} SchoolLogo={SchoolLogo} />}
 
       {page === "teacher" && (
