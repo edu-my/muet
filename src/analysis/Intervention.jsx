@@ -1,139 +1,91 @@
-// ============================================================
-// ANALYSIS - INTERVENTION PAGE
-// ============================================================
 import { useState } from "react";
-import { Card, SectionTitle, BandBadge, Bar, thStyle, tdStyle,
-  colors, font, displayFont, getBand, getNextBandThreshold, computeInterventionGroups, computeStats, safeNum } from "./shared.jsx";
+import { Card, SectionTitle, Reveal, thStyle, tdStyle,
+  colors, font, monoFont, displayFont, getBand, getNextBandThreshold, computeInterventionGroups, computeStats, safeNum } from "./shared.jsx";
 
 export default function Intervention({ students, classes }) {
-  const [simImprovement, setSimImprovement] = useState(10);
+  var [simBoost, setSimBoost] = useState(15);
+  var st = students || [];
+  var atRisk = st.filter(function(s) { var b = parseFloat(s.band); return b > 0 && b < 3; });
+  var groups = computeInterventionGroups(atRisk);
 
-  const atRisk = students.filter(s => { const b = parseFloat(s.band); return b > 0 && b < 3; });
-  const interventionGroups = computeInterventionGroups(atRisk);
-  const stats = computeStats(students);
-
-  // -- Target simulator: what if at-risk students improve by X marks in weakest component? --
-  const simulate = () => {
-    if (!stats) return null;
-    const simStudents = students.map(s => {
-      const b = parseFloat(s.band);
-      if (b >= 3 || b <= 0) return s;
-      const comps = [
-        { name: "t1Score", val: s.t1Score || 0 },
-        { name: "t2Score", val: s.t2Score || 0 },
-        { name: "t3Score", val: s.t3Score || 0 },
-        { name: "t4Score", val: s.t4Score || 0 },
-      ].sort((a, b) => a.val - b.val);
-      const improved = { ...s };
-      improved[comps[0].name] = Math.min((improved[comps[0].name] || 0) + simImprovement, 90);
-      improved.overall = (improved.t1Score || 0) + (improved.t2Score || 0) + (improved.t3Score || 0) + (improved.t4Score || 0);
-      improved.band = getBand(Math.round(improved.overall)).band;
-      return improved;
-    });
-    return computeStats(simStudents);
-  };
-
-  const simStats = simulate();
-  const currentAtRisk = atRisk.length;
-  const simAtRisk = simStats ? students.filter(s => {
-    const b = parseFloat(s.band);
-    if (b >= 3 || b <= 0) return false;
-    return true;
-  }).filter(s => {
-    const comps = [
-      { name: "t1Score", val: s.t1Score || 0 },
-      { name: "t2Score", val: s.t2Score || 0 },
-      { name: "t3Score", val: s.t3Score || 0 },
-      { name: "t4Score", val: s.t4Score || 0 },
-    ].sort((a, b) => a.val - b.val);
-    const newWeakest = Math.min((s[comps[0].name] || 0) + simImprovement, 90);
-    const newOverall = (s.t1Score || 0) + (s.t2Score || 0) + (s.t3Score || 0) + (s.t4Score || 0) - (s[comps[0].name] || 0) + newWeakest;
-    const newBand = parseFloat(getBand(Math.round(newOverall)).band);
-    return newBand < 3;
-  }).length : currentAtRisk;
+  var simulated = atRisk.map(function(s) {
+    var comps = [{ n: "R", v: safeNum(s.t1Score) }, { n: "L", v: safeNum(s.t2Score) }, { n: "S", v: safeNum(s.t3Score) }, { n: "W", v: safeNum(s.t4Score) }].sort(function(a, b) { return a.v - b.v; });
+    var boosted = safeNum(s.overall) + simBoost;
+    return { name: s.name, current: safeNum(s.overall), simulated: boosted, currentBand: s.band, simBand: getBand(boosted).band, weak: comps[0].n };
+  });
+  var improved = simulated.filter(function(s) { return parseFloat(s.simBand) >= 3 && parseFloat(s.currentBand) < 3; }).length;
 
   return (
     <div>
-      {/* Intervention groups by weakest component */}
-      <Card style={{ marginBottom: 16 }}>
-        <SectionTitle>Intervention Groups by Weakest Component</SectionTitle>
-        {atRisk.length === 0 ? (
-          <p style={{ fontFamily: font, fontSize: 13, color: colors.accent, textAlign: "center", padding: 20 }}>
-            No at-risk students (all Band 3+). Well done!
-          </p>
-        ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-            {Object.entries(interventionGroups).map(([comp, group]) => (
-              <div key={comp} style={{ borderRadius: 12, border: `1px solid ${colors.border}`, overflow: "hidden" }}>
-                <div style={{
-                  padding: "10px 14px", background: group.length > 0 ? colors.errorBg : colors.warm,
-                  display: "flex", justifyContent: "space-between", alignItems: "center",
-                }}>
-                  <span style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: group.length > 0 ? colors.band1 : colors.accent }}>{comp}</span>
-                  <span style={{ fontFamily: font, fontSize: 12, fontWeight: 600, color: colors.textMuted }}>{group.length} students</span>
-                </div>
-                {group.length > 0 && (
-                  <div style={{ padding: 12, maxHeight: 200, overflowY: "auto" }}>
-                    {group.sort((a, b) => (a[comp === "Reading" ? "t1Score" : comp === "Listening" ? "t2Score" : comp === "Speaking" ? "t3Score" : "t4Score"] || 0) - (b[comp === "Reading" ? "t1Score" : comp === "Listening" ? "t2Score" : comp === "Speaking" ? "t3Score" : "t4Score"] || 0)).map((s, i) => {
-                      const scoreKey = comp === "Reading" ? "t1Score" : comp === "Listening" ? "t2Score" : comp === "Speaking" ? "t3Score" : "t4Score";
-                      const next = getNextBandThreshold(s.overall);
-                      return (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: i < group.length - 1 ? `1px solid ${colors.border}` : "none" }}>
-                          <div>
-                            <p style={{ fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.text, margin: 0 }}>{s.name}</p>
-                            <p style={{ fontFamily: font, fontSize: 10, color: colors.textMuted, margin: 0 }}>
-                              {comp}: {Math.round(s[scoreKey])}/90 {next ? ` \u00B7 Need +${next.needed} for Band ${next.band}` : ""}
-                            </p>
-                          </div>
-                          <BandBadge band={s.band} />
-                        </div>
-                      );
-                    })}
+      <Reveal>
+        <Card style={{ marginBottom: 16 }}>
+          <SectionTitle>Intervention Groups (Below Band 3)</SectionTitle>
+          {atRisk.length === 0 ? <p style={{ fontFamily: monoFont, fontSize: 12, color: colors.textMuted, textAlign: "center", padding: 16 }}>no at-risk students</p> : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+              {Object.entries(groups).map(function(entry) {
+                var comp = entry[0], group = entry[1];
+                return (
+                  <div key={comp} style={{ textAlign: "center", padding: 12, borderRadius: 8, background: group.length > 0 ? colors.errorBg : colors.cardAlt, border: "1px solid " + colors.borderLight }}>
+                    <p style={{ fontFamily: monoFont, fontSize: 9, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0 }}>{comp}</p>
+                    <p style={{ fontFamily: displayFont, fontSize: 22, fontWeight: 700, color: group.length > 0 ? colors.band1 : colors.accent, margin: "4px 0 0" }}>{group.length}</p>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-
-      {/* Target simulator */}
-      {atRisk.length > 0 && (
-        <Card>
-          <SectionTitle>Target Simulator</SectionTitle>
-          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, marginBottom: 16 }}>
-            What if at-risk students improve their weakest component by <strong style={{ color: colors.accent }}>{simImprovement}</strong> marks?
-          </p>
-
-          {/* Slider */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 20 }}>
-            <span style={{ fontFamily: font, fontSize: 12, color: colors.textMuted }}>+5</span>
-            <input type="range" min={5} max={30} step={5} value={simImprovement}
-              onChange={(e) => setSimImprovement(parseInt(e.target.value))}
-              style={{ flex: 1, accentColor: colors.accent }}
-            />
-            <span style={{ fontFamily: font, fontSize: 12, color: colors.textMuted }}>+30</span>
-          </div>
-
-          {/* Simulation results */}
-          <div style={{ display: "flex", gap: 16 }}>
-            <div style={{ flex: 1, textAlign: "center", padding: 16, borderRadius: 10, background: colors.errorBg }}>
-              <p style={{ fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>Current at-risk</p>
-              <p style={{ fontFamily: displayFont, fontSize: 28, fontWeight: 700, color: colors.band1, margin: "4px 0" }}>{currentAtRisk}</p>
+                );
+              })}
             </div>
-            <div style={{ display: "flex", alignItems: "center" }}>
-              <span style={{ fontFamily: font, fontSize: 20, color: colors.textMuted }}>&rarr;</span>
-            </div>
-            <div style={{ flex: 1, textAlign: "center", padding: 16, borderRadius: 10, background: colors.accentLight }}>
-              <p style={{ fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>After +{simImprovement}</p>
-              <p style={{ fontFamily: displayFont, fontSize: 28, fontWeight: 700, color: colors.accent, margin: "4px 0" }}>{simAtRisk}</p>
-            </div>
-            <div style={{ flex: 1, textAlign: "center", padding: 16, borderRadius: 10, background: colors.warm }}>
-              <p style={{ fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>Would move up</p>
-              <p style={{ fontFamily: displayFont, fontSize: 28, fontWeight: 700, color: colors.accent, margin: "4px 0" }}>{currentAtRisk - simAtRisk}</p>
-            </div>
-          </div>
+          )}
         </Card>
+      </Reveal>
+      {atRisk.length > 0 && (
+        <Reveal delay={0.1}>
+          <Card style={{ marginBottom: 16 }}>
+            <SectionTitle>Target Simulator</SectionTitle>
+            <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, marginBottom: 12 }}>If each at-risk student improved by <strong>{simBoost}</strong> marks overall:</p>
+            <input type="range" min="5" max="50" step="5" value={simBoost} onChange={function(e) { setSimBoost(Number(e.target.value)); }}
+              style={{ width: "100%", marginBottom: 12 }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+              <div style={{ textAlign: "center", padding: 14, borderRadius: 8, background: colors.cardAlt, border: "1px solid " + colors.borderLight }}>
+                <p style={{ fontFamily: monoFont, fontSize: 9, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>current at-risk</p>
+                <p style={{ fontFamily: displayFont, fontSize: 24, fontWeight: 700, color: colors.band1, margin: "4px 0 0" }}>{atRisk.length}</p>
+              </div>
+              <div style={{ textAlign: "center", padding: 14, borderRadius: 8, background: colors.accentMuted, border: "1px solid " + colors.borderLight }}>
+                <p style={{ fontFamily: monoFont, fontSize: 9, color: colors.textMuted, textTransform: "uppercase", margin: 0 }}>would reach band 3+</p>
+                <p style={{ fontFamily: displayFont, fontSize: 24, fontWeight: 700, color: colors.accent, margin: "4px 0 0" }}>{improved}</p>
+              </div>
+            </div>
+          </Card>
+        </Reveal>
+      )}
+      {atRisk.length > 0 && (
+        <Reveal delay={0.2}>
+          <Card>
+            <SectionTitle>At-Risk Details</SectionTitle>
+            <div style={{ overflow: "auto", maxHeight: 350 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead><tr>
+                  {["Name", "Class", "Score", "Band", "Weakest", "Gap"].map(function(h) {
+                    return <th key={h} style={Object.assign({}, thStyle, { textAlign: h === "Name" ? "left" : "center" })}>{h}</th>;
+                  })}
+                </tr></thead>
+                <tbody>
+                  {atRisk.sort(function(a, b) { return safeNum(a.overall) - safeNum(b.overall); }).map(function(s, i) {
+                    var comps = [{ n: "Reading", v: safeNum(s.t1Score) }, { n: "Listening", v: safeNum(s.t2Score) }, { n: "Speaking", v: safeNum(s.t3Score) }, { n: "Writing", v: safeNum(s.t4Score) }].sort(function(a, b) { return a.v - b.v; });
+                    var next = getNextBandThreshold(safeNum(s.overall));
+                    return (
+                      <tr key={i}>
+                        <td style={Object.assign({}, tdStyle, { textAlign: "left", fontWeight: 500 })}>{s.name}</td>
+                        <td style={Object.assign({}, tdStyle, { color: colors.textMuted, fontSize: 11 })}>{s.class}</td>
+                        <td style={Object.assign({}, tdStyle, { fontFamily: monoFont, fontWeight: 700 })}>{Math.round(safeNum(s.overall))}</td>
+                        <td style={Object.assign({}, tdStyle, { fontFamily: monoFont })}>{s.band}</td>
+                        <td style={Object.assign({}, tdStyle, { fontSize: 11 })}>{comps[0].n} ({comps[0].v})</td>
+                        <td style={Object.assign({}, tdStyle, { fontFamily: monoFont, color: colors.accent })}>{next ? "+" + next.needed : "-"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </Reveal>
       )}
     </div>
   );

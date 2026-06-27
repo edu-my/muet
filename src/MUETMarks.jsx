@@ -120,17 +120,18 @@ const parseExcel = async (file) => {
 };
 
 // ============================================================
-// STYLES
+// STYLES - Oberon-inspired editorial design
 // ============================================================
-const font = `'DM Sans', sans-serif`;
-const displayFont = `'Playfair Display', serif`;
+const font = `'Inter', 'DM Sans', system-ui, sans-serif`;
+const displayFont = `'Playfair Display', Georgia, serif`;
+const monoFont = `'JetBrains Mono', 'SF Mono', monospace`;
 const colors = {
-  bg: "#FAFAF7", card: "#FFFFFF",
-  accent: "#2D6A4F", accentLight: "#D8F3DC", accentDark: "#1B4332",
-  text: "#1A1A1A", textMuted: "#6B7280",
-  border: "#E8E5E0", warm: "#F5F0EB",
-  error: "#DC2626", errorBg: "#FEF2F2",
-  band5: "#2D6A4F", band4: "#40916C", band3: "#52B788", band2: "#F59E0B", band1: "#EF4444",
+  bg: "#F4F1EC", card: "#FFFFFF", cardAlt: "#FAF8F5",
+  accent: "#2D6A4F", accentLight: "#D8F3DC", accentMuted: "rgba(45,106,79,0.08)", accentDark: "#1B4332",
+  text: "#1A1A1A", textMuted: "#8A8A8A", textLight: "#B0ADA8",
+  border: "#E2DED8", borderLight: "#EDEAE5", warm: "#F0ECE6",
+  error: "#C53030", errorBg: "#FFF5F5",
+  band5: "#2D6A4F", band4: "#40916C", band3: "#52B788", band2: "#D69E2E", band1: "#C53030",
 };
 
 // ============================================================
@@ -138,13 +139,11 @@ const colors = {
 // ============================================================
 const BgPattern = () => (
   <div style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none",
-    background: `radial-gradient(ellipse 80% 60% at 20% 10%, rgba(45,106,79,0.06) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 80% 90%, rgba(45,106,79,0.04) 0%, transparent 50%),
-      linear-gradient(180deg, ${colors.bg} 0%, #F0EDE8 100%)`,
+    background: `linear-gradient(180deg, ${colors.bg} 0%, #EDE9E3 100%)`,
   }}>
-    <svg width="100%" height="100%" style={{ opacity: 0.03 }}>
-      <defs><pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-        <path d="M 60 0 L 0 0 0 60" fill="none" stroke={colors.accent} strokeWidth="0.5" />
+    <svg width="100%" height="100%" style={{ opacity: 0.025 }}>
+      <defs><pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
+        <path d="M 80 0 L 0 0 0 80" fill="none" stroke={colors.text} strokeWidth="0.5" />
       </pattern></defs>
       <rect width="100%" height="100%" fill="url(#grid)" />
     </svg>
@@ -158,23 +157,24 @@ const SchoolLogo = ({ size = 48 }) => (
 const Logo = ({ size = "large" }) => {
   const s = size === "large";
   return (
-    <div style={{ textAlign: "center", marginBottom: s ? 32 : 20 }}>
-      <div style={{ margin: "0 auto 12px" }}><SchoolLogo size={s ? 72 : 44} /></div>
-      <h1 style={{ fontFamily: displayFont, fontSize: s ? 36 : 22, fontWeight: 700, color: colors.text, margin: 0, letterSpacing: "-0.02em" }}>MUET Marks</h1>
-      <p style={{ fontFamily: font, fontSize: s ? 15 : 12, color: colors.textMuted, marginTop: 6 }}>{CONFIG.SCHOOL} &middot; Marks Management System</p>
+    <div style={{ textAlign: "center", marginBottom: s ? 36 : 20 }}>
+      <div style={{ margin: "0 auto 14px" }}><SchoolLogo size={s ? 72 : 44} /></div>
+      <p style={{ fontFamily: monoFont, fontSize: 10, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>marks management system</p>
+      <h1 style={{ fontFamily: displayFont, fontSize: s ? 34 : 22, fontWeight: 700, color: colors.text, margin: 0, letterSpacing: "-0.02em" }}>MUET Marks</h1>
+      <p style={{ fontFamily: font, fontSize: s ? 13 : 11, color: colors.textMuted, marginTop: 8 }}>{CONFIG.SCHOOL}</p>
     </div>
   );
 };
 
 const Select = ({ label, value, onChange, options, placeholder }) => (
   <div style={{ flex: 1, minWidth: 200 }}>
-    <label style={{ display: "block", fontFamily: font, fontSize: 12, fontWeight: 600, color: colors.textMuted, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</label>
+    <label style={{ display: "block", fontFamily: monoFont, fontSize: 9, fontWeight: 500, color: colors.textMuted, marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</label>
     <select value={value} onChange={(e) => onChange(e.target.value)} style={{
-      width: "100%", padding: "12px 14px", fontSize: 14, fontFamily: font,
-      border: `1.5px solid ${colors.border}`, borderRadius: 10, background: colors.card,
+      width: "100%", padding: "10px 14px", fontSize: 13, fontFamily: font,
+      border: `1px solid ${colors.border}`, borderRadius: 8, background: colors.card,
       color: value ? colors.text : colors.textMuted, outline: "none", cursor: "pointer", appearance: "none",
-      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")`,
-      backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center", boxSizing: "border-box",
+      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238A8A8A' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")`,
+      backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center", boxSizing: "border-box",
     }}>
       <option value="" disabled>{placeholder}</option>
       {options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
@@ -183,20 +183,21 @@ const Select = ({ label, value, onChange, options, placeholder }) => (
 );
 
 const BandBadge = ({ band }) => {
-  let bg = colors.border, fg = colors.textMuted;
+  let bg = colors.borderLight, fg = colors.textMuted;
   const b = parseFloat(band);
-  if (b >= 5) { bg = "#D1FAE5"; fg = colors.band5; }
-  else if (b >= 4) { bg = "#D1FAE5"; fg = colors.band4; }
-  else if (b >= 3) { bg = "#ECFDF5"; fg = colors.band3; }
-  else if (b >= 2) { bg = "#FEF3C7"; fg = colors.band2; }
-  else if (b >= 1) { bg = "#FEE2E2"; fg = colors.band1; }
-  return <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 6, fontSize: 12, fontWeight: 700, fontFamily: font, background: bg, color: fg }}>{band}</span>;
+  if (b >= 5) { bg = colors.accentMuted; fg = colors.band5; }
+  else if (b >= 4) { bg = colors.accentMuted; fg = colors.band4; }
+  else if (b >= 3) { bg = "rgba(82,183,136,0.1)"; fg = colors.band3; }
+  else if (b >= 2) { bg = "rgba(214,158,46,0.1)"; fg = colors.band2; }
+  else if (b >= 1) { bg = "rgba(197,48,48,0.1)"; fg = colors.band1; }
+  return <span style={{ display: "inline-block", padding: "3px 10px", borderRadius: 4, fontSize: 11, fontWeight: 600, fontFamily: monoFont, background: bg, color: fg }}>{band}</span>;
 };
 
 const headerBtnStyle = {
-  fontFamily: font, fontSize: 13, fontWeight: 500, color: colors.textMuted,
-  background: "none", border: `1px solid ${colors.border}`, borderRadius: 8,
-  padding: "8px 16px", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
+  fontFamily: monoFont, fontSize: 11, fontWeight: 500, color: colors.textMuted,
+  background: "none", border: `1px solid ${colors.border}`, borderRadius: 6,
+  padding: "7px 14px", cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
+  letterSpacing: "0.02em",
 };
 
 // ============================================================
@@ -204,33 +205,34 @@ const headerBtnStyle = {
 // ============================================================
 const LandingPage = ({ onTeacher, onStudent }) => {
   const cardBase = {
-    background: colors.card, borderRadius: 16, padding: "36px 28px",
+    background: colors.card, borderRadius: 12, padding: "36px 28px",
     border: `1px solid ${colors.border}`,
-    boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)",
-    cursor: "pointer", transition: "all 0.2s", textAlign: "center", flex: "1 1 260px", maxWidth: 320,
+    cursor: "pointer", transition: "all 0.25s", textAlign: "center", flex: "1 1 260px", maxWidth: 320,
   };
-  const hoverIn = (e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(45,106,79,0.12)"; };
-  const hoverOut = (e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)"; };
+  const hoverIn = (e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-3px)"; };
+  const hoverOut = (e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; };
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 24, position: "relative", zIndex: 1 }}>
       <Logo size="large" />
-      <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center", maxWidth: 680, width: "100%" }}>
+      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", maxWidth: 680, width: "100%" }}>
         <div style={cardBase} onClick={onTeacher} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: colors.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+          <span style={{ fontFamily: monoFont, fontSize: 10, color: colors.accent, letterSpacing: "0.04em" }}>01</span>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.accentMuted, display: "flex", alignItems: "center", justifyContent: "center", margin: "12px auto 16px" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
           </div>
-          <h2 style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Teacher</h2>
-          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>Upload marks and manage the system</p>
+          <h2 style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: colors.text, marginBottom: 6 }}>Teacher</h2>
+          <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, lineHeight: 1.5 }}>Upload marks and manage the system</p>
         </div>
         <div style={cardBase} onClick={onStudent} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: colors.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+          <span style={{ fontFamily: monoFont, fontSize: 10, color: colors.accent, letterSpacing: "0.04em" }}>02</span>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.accentMuted, display: "flex", alignItems: "center", justifyContent: "center", margin: "12px auto 16px" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
           </div>
-          <h2 style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Student</h2>
-          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>View results, register for MUET</p>
+          <h2 style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: colors.text, marginBottom: 6 }}>Student</h2>
+          <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, lineHeight: 1.5 }}>View results, register for MUET</p>
         </div>
       </div>
-      <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, opacity: 0.5, marginTop: 40 }}>MUET Marks &middot; {CONFIG.SCHOOL} &middot; 2026</p>
+      <p style={{ fontFamily: monoFont, fontSize: 9, color: colors.textLight, marginTop: 40, letterSpacing: "0.06em" }}>muet marks &middot; {CONFIG.SCHOOL.toLowerCase()} &middot; 2026</p>
     </div>
   );
 };
@@ -253,21 +255,20 @@ const TeacherLogin = ({ onAuth, onBack }) => {
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 24, padding: 24, position: "relative", zIndex: 1 }}>
       <Logo size="small" />
       <form onSubmit={handleSubmit} style={{
-        background: colors.card, borderRadius: 16, padding: "36px 32px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)",
-        border: `1px solid ${colors.border}`, width: "100%", maxWidth: 380,
+        background: colors.card, borderRadius: 12, padding: "32px 28px",
+        border: `1px solid ${colors.border}`, width: "100%", maxWidth: 360,
         animation: shake ? "shake 0.4s ease" : "fadeUp 0.5s ease",
       }}>
-        <label style={{ display: "block", fontFamily: font, fontSize: 13, fontWeight: 500, color: colors.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>Teacher Password</label>
+        <label style={{ display: "block", fontFamily: monoFont, fontSize: 9, fontWeight: 500, color: colors.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.08em" }}>teacher password</label>
         <input ref={inputRef} type="password" value={pw} onChange={(e) => { setPw(e.target.value); setError(""); }} placeholder="Enter password"
-          style={{ width: "100%", padding: "14px 16px", fontSize: 16, fontFamily: font, border: `1.5px solid ${error ? colors.error : colors.border}`, borderRadius: 10, outline: "none", background: colors.bg, boxSizing: "border-box" }}
-          onFocus={(e) => { e.target.style.borderColor = colors.accent; e.target.style.boxShadow = "0 0 0 3px rgba(45,106,79,0.1)"; }}
-          onBlur={(e) => { e.target.style.borderColor = error ? colors.error : colors.border; e.target.style.boxShadow = "none"; }} />
-        {error && <p style={{ fontFamily: font, fontSize: 13, color: colors.error, marginTop: 8 }}>{error}</p>}
-        <button type="submit" style={{ width: "100%", marginTop: 20, padding: "14px 0", fontSize: 15, fontFamily: font, fontWeight: 600, color: "#fff", background: colors.accent, border: "none", borderRadius: 10, cursor: "pointer", boxShadow: "0 2px 8px rgba(45,106,79,0.2)" }}
-          onMouseEnter={(e) => e.target.style.background = colors.accentDark} onMouseLeave={(e) => e.target.style.background = colors.accent}>Sign In</button>
+          style={{ width: "100%", padding: "12px 14px", fontSize: 14, fontFamily: font, border: `1px solid ${error ? colors.error : colors.border}`, borderRadius: 8, outline: "none", background: colors.cardAlt, boxSizing: "border-box" }}
+          onFocus={(e) => { e.target.style.borderColor = colors.accent; }}
+          onBlur={(e) => { e.target.style.borderColor = error ? colors.error : colors.border; }} />
+        {error && <p style={{ fontFamily: monoFont, fontSize: 11, color: colors.error, marginTop: 8 }}>{error}</p>}
+        <button type="submit" style={{ width: "100%", marginTop: 18, padding: "12px 0", fontSize: 13, fontFamily: monoFont, fontWeight: 500, color: "#fff", background: colors.accent, border: "none", borderRadius: 8, cursor: "pointer", letterSpacing: "0.02em" }}
+          onMouseEnter={(e) => e.target.style.background = colors.accentDark} onMouseLeave={(e) => e.target.style.background = colors.accent}>sign in</button>
       </form>
-      <button onClick={onBack} style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3 }}>Back to home</button>
+      <button onClick={onBack} style={{ fontFamily: monoFont, fontSize: 11, color: colors.textMuted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3, letterSpacing: "0.02em" }}>back to home</button>
     </div>
   );
 };
@@ -600,7 +601,7 @@ const StudentView = ({ onHome }) => {
     const win = window.open("", "_blank");
     win.document.write(`<!DOCTYPE html><html><head>
       <title>MUET Result - ${results[0]?.name || ""}</title>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: 'DM Sans', sans-serif; padding: 40px; background: #fff; } @page { size: A4 portrait; margin: 0; } @media print { body { padding: 15mm 20mm; } .no-print { display: none !important; } } .slip { page-break-after: always; max-width: 600px; margin: 0 auto; } .slip:last-child { page-break-after: auto; }</style>
     </head><body>${printRef.current.innerHTML.replace(/src="[^"]*logo[^"]*"/g, 'src="' + SCHOOL_LOGO_B64 + '"')}
       <div class="no-print" style="text-align:center;margin-top:32px;"><button onclick="window.print()" style="padding:12px 32px;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;color:#fff;background:#2D6A4F;border:none;border-radius:10px;cursor:pointer;">Print</button></div>
@@ -1016,14 +1017,16 @@ export default function MUETMarks() {
 
   return (
     <>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
       <style>{`
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: ${colors.bg}; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        body { background: ${colors.bg}; -webkit-font-smoothing: antialiased; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-4px); } }
         @keyframes spin { to { transform: rotate(360deg); } }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        ::selection { background: ${colors.accentLight}; color: ${colors.accentDark}; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: ${colors.border}; border-radius: 3px; }
       `}</style>
