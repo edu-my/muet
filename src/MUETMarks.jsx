@@ -202,39 +202,32 @@ const headerBtnStyle = {
 // ============================================================
 // LANDING PAGE
 // ============================================================
-const LandingPage = ({ onTeacher, onStudent, onRegister }) => {
+const LandingPage = ({ onTeacher, onStudent }) => {
   const cardBase = {
     background: colors.card, borderRadius: 16, padding: "36px 28px",
     border: `1px solid ${colors.border}`,
     boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)",
-    cursor: "pointer", transition: "all 0.2s", textAlign: "center", flex: "1 1 200px", maxWidth: 280,
+    cursor: "pointer", transition: "all 0.2s", textAlign: "center", flex: "1 1 260px", maxWidth: 320,
   };
   const hoverIn = (e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(45,106,79,0.12)"; };
   const hoverOut = (e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04), 0 8px 30px rgba(0,0,0,0.06)"; };
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 24, position: "relative", zIndex: 1 }}>
       <Logo size="large" />
-      <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center", maxWidth: 900, width: "100%" }}>
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center", maxWidth: 680, width: "100%" }}>
         <div style={cardBase} onClick={onTeacher} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           <div style={{ width: 52, height: 52, borderRadius: 14, background: colors.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
           </div>
           <h2 style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Teacher</h2>
-          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>Upload marks from Excel and submit to the system</p>
+          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>Upload marks and manage the system</p>
         </div>
         <div style={cardBase} onClick={onStudent} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
           <div style={{ width: 52, height: 52, borderRadius: 14, background: colors.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
           </div>
           <h2 style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Student</h2>
-          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>Look up your results using your IC number</p>
-        </div>
-        <div style={cardBase} onClick={onRegister} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
-          <div style={{ width: 52, height: 52, borderRadius: 14, background: colors.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="20" y1="8" x2="20" y2="14" /><line x1="23" y1="11" x2="17" y2="11" /></svg>
-          </div>
-          <h2 style={{ fontFamily: font, fontSize: 18, fontWeight: 700, color: colors.text, marginBottom: 8 }}>Register</h2>
-          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>Register for MUET by filling in your details</p>
+          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, lineHeight: 1.5 }}>View results, register for MUET</p>
         </div>
       </div>
       <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, opacity: 0.5, marginTop: 40 }}>MUET Marks &middot; {CONFIG.SCHOOL} &middot; 2026</p>
@@ -562,11 +555,18 @@ const RegisterView = ({ onHome }) => {
 // STUDENT VIEW - MPM-style result slip with logo
 // ============================================================
 const StudentView = ({ onHome }) => {
+  const [studentTab, setStudentTab] = useState("results");
   const [ic, setIc] = useState("");
   const [results, setResults] = useState(null);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
   const [selectedExam, setSelectedExam] = useState("");
+  const [regForm, setRegForm] = useState({ year: "2026", class: "", name: "", ic: "", contact: "", email: "", sex: "", race: "" });
+  const [regSaving, setRegSaving] = useState(false);
+  const [regMsg, setRegMsg] = useState("");
+  const [regMode, setRegMode] = useState("new"); // "new" or "edit"
+  const [regLookupIc, setRegLookupIc] = useState("");
+  const [regLookupLoading, setRegLookupLoading] = useState(false);
   const inputRef = useRef(null);
   const printRef = useRef(null);
 
@@ -670,14 +670,23 @@ const StudentView = ({ onHome }) => {
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 32 }}>
           <SchoolLogo size={40} />
           <div style={{ flex: 1 }}>
-            <h1 style={{ fontFamily: displayFont, fontSize: 22, fontWeight: 700, color: colors.text }}>Student Results</h1>
+            <h1 style={{ fontFamily: displayFont, fontSize: 22, fontWeight: 700, color: colors.text }}>Student Dashboard</h1>
             <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted }}>{CONFIG.SCHOOL} &middot; MUET</p>
           </div>
-          <button onClick={onHome} style={headerBtnStyle}
-            onMouseEnter={(e) => { e.target.style.borderColor = colors.accent; e.target.style.color = colors.accent; }}
-            onMouseLeave={(e) => { e.target.style.borderColor = colors.border; e.target.style.color = colors.textMuted; }}>Home</button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => setStudentTab("results")} style={{ ...headerBtnStyle, ...(studentTab === "results" ? { borderColor: colors.accent, color: colors.accent, fontWeight: 600 } : {}) }}
+              onMouseEnter={(e) => { e.target.style.borderColor = colors.accent; e.target.style.color = colors.accent; }}
+              onMouseLeave={(e) => { if (studentTab !== "results") { e.target.style.borderColor = colors.border; e.target.style.color = colors.textMuted; } }}>Results</button>
+            <button onClick={() => setStudentTab("register")} style={{ ...headerBtnStyle, ...(studentTab === "register" ? { borderColor: colors.accent, color: colors.accent, fontWeight: 600 } : {}) }}
+              onMouseEnter={(e) => { e.target.style.borderColor = colors.accent; e.target.style.color = colors.accent; }}
+              onMouseLeave={(e) => { if (studentTab !== "register") { e.target.style.borderColor = colors.border; e.target.style.color = colors.textMuted; } }}>Registration</button>
+            <button onClick={onHome} style={headerBtnStyle}
+              onMouseEnter={(e) => { e.target.style.borderColor = colors.accent; e.target.style.color = colors.accent; }}
+              onMouseLeave={(e) => { e.target.style.borderColor = colors.border; e.target.style.color = colors.textMuted; }}>Home</button>
+          </div>
         </div>
 
+        {studentTab === "results" && (<>
         <form onSubmit={handleSearch} style={{ background: colors.card, borderRadius: 16, padding: "28px", border: `1px solid ${colors.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)", marginBottom: 24 }}>
           <label style={{ display: "block", fontFamily: font, fontSize: 12, fontWeight: 600, color: colors.textMuted, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.06em" }}>IC Number (NO.KP)</label>
           <div style={{ display: "flex", gap: 12 }}>
@@ -803,6 +812,137 @@ const StudentView = ({ onHome }) => {
             </div>
           </div>
         )}
+        </>)}
+
+        {studentTab === "register" && (
+          <div style={{ animation: "fadeUp 0.4s ease" }}>
+            {regMsg && (
+              <div style={{
+                padding: "10px 14px", marginBottom: 14, borderRadius: 8, fontFamily: font, fontSize: 12,
+                background: regMsg.includes("Error") || regMsg.includes("Failed") || regMsg.includes("Please") ? "#FEF2F2" : "rgba(45,106,79,0.08)",
+                color: regMsg.includes("Error") || regMsg.includes("Failed") || regMsg.includes("Please") ? colors.error : colors.accent,
+              }}>{regMsg}</div>
+            )}
+
+            {/* Lookup existing registration */}
+            <div style={{ background: colors.card, borderRadius: 16, padding: "24px 28px", border: `1px solid ${colors.border}`, marginBottom: 16 }}>
+              <label style={{ display: "block", fontFamily: font, fontSize: 11, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: 6 }}>Edit existing registration? Enter your IC:</label>
+              <div style={{ display: "flex", gap: 10 }}>
+                <input type="text" value={regLookupIc} onChange={(e) => setRegLookupIc(e.target.value)} placeholder="e.g. 080101-12-1234"
+                  style={{ flex: 1, padding: "10px 14px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg, color: colors.text, outline: "none", boxSizing: "border-box" }} />
+                <button onClick={async () => {
+                  if (!regLookupIc.trim()) return;
+                  setRegLookupLoading(true); setRegMsg("");
+                  try {
+                    const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=get_registrations`);
+                    const data = await res.json();
+                    if (data.success && data.records) {
+                      const found = data.records.find(r => String(r.ic).replace(/\D/g,"") === regLookupIc.trim().replace(/\D/g,""));
+                      if (found) {
+                        setRegForm({ year: String(found.year || "2026"), class: String(found.class || ""), name: String(found.name || ""), ic: String(found.ic || ""), contact: String(found.contact || ""), email: String(found.email || ""), sex: String(found.sex || ""), race: String(found.race || "") });
+                        setRegMode("edit");
+                        setRegMsg("Record found. Edit your details below and click Update.");
+                      } else { setRegMsg("No registration found for this IC. Fill in the form below to register."); setRegMode("new"); }
+                    }
+                  } catch { setRegMsg("Failed to look up. Try again."); }
+                  setRegLookupLoading(false);
+                }} disabled={regLookupLoading}
+                  style={{ padding: "10px 18px", fontSize: 13, fontFamily: font, fontWeight: 600, color: "#fff", background: colors.accent, border: "none", borderRadius: 8, cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {regLookupLoading ? "Looking up..." : "Look Up"}
+                </button>
+              </div>
+            </div>
+
+            {/* Registration form */}
+            <div style={{ background: colors.card, borderRadius: 16, padding: "28px", border: `1px solid ${colors.border}` }}>
+              <h3 style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: colors.text, marginBottom: 14, textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                {regMode === "edit" ? "Edit Registration" : "MUET Registration"}
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                <div>
+                  <label style={{ display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Year *</label>
+                  <select value={regForm.year} onChange={(e) => setRegForm(p => ({...p, year: e.target.value}))}
+                    style={{ width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg, outline: "none", boxSizing: "border-box" }}>
+                    {REGISTER_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Class *</label>
+                  <select value={regForm.class} onChange={(e) => setRegForm(p => ({...p, class: e.target.value}))}
+                    style={{ width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg, outline: "none", boxSizing: "border-box" }}>
+                    <option value="">Select class...</option>
+                    {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={{ display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Full Name *</label>
+                  <input type="text" value={regForm.name} onChange={(e) => setRegForm(p => ({...p, name: e.target.value}))} placeholder="Your full name (as in IC)"
+                    style={{ width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg, outline: "none", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>IC Number *</label>
+                  <input type="text" value={regForm.ic} onChange={(e) => setRegForm(p => ({...p, ic: e.target.value}))} placeholder="e.g. 080101-12-1234"
+                    disabled={regMode === "edit"}
+                    style={{ width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: regMode === "edit" ? "#f0f0f0" : colors.bg, outline: "none", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Contact No.</label>
+                  <input type="text" value={regForm.contact} onChange={(e) => setRegForm(p => ({...p, contact: e.target.value}))} placeholder="e.g. 011-12345678"
+                    style={{ width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg, outline: "none", boxSizing: "border-box" }} />
+                </div>
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <label style={{ display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Email</label>
+                  <input type="email" value={regForm.email} onChange={(e) => setRegForm(p => ({...p, email: e.target.value}))} placeholder="your.email@example.com"
+                    style={{ width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg, outline: "none", boxSizing: "border-box" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Sex</label>
+                  <select value={regForm.sex} onChange={(e) => setRegForm(p => ({...p, sex: e.target.value}))}
+                    style={{ width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg, outline: "none", boxSizing: "border-box" }}>
+                    <option value="">Select...</option>
+                    {SEX_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: "block", fontFamily: font, fontSize: 10, fontWeight: 600, color: colors.textMuted, textTransform: "uppercase", marginBottom: 4 }}>Race</label>
+                  <select value={regForm.race} onChange={(e) => setRegForm(p => ({...p, race: e.target.value}))}
+                    style={{ width: "100%", padding: "10px 12px", fontSize: 13, fontFamily: font, border: `1.5px solid ${colors.border}`, borderRadius: 8, background: colors.bg, outline: "none", boxSizing: "border-box" }}>
+                    <option value="">Select...</option>
+                    {RACE_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                <button onClick={async () => {
+                  if (!regForm.name || !regForm.class || !regForm.year || !regForm.ic) {
+                    setRegMsg("Please fill in Year, Class, Name, and IC Number."); return;
+                  }
+                  setRegSaving(true); setRegMsg("");
+                  try {
+                    const payload = { ...regForm, action: "save_registration" };
+                    if (regMode === "edit") payload.editingIC = regForm.ic;
+                    const res = await fetch(CONFIG.APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+                    const data = await res.json();
+                    if (data.success) {
+                      setRegMsg(regMode === "edit" ? "Updated successfully!" : "Registration submitted successfully!");
+                      if (regMode === "new") setRegForm({ year: "2026", class: "", name: "", ic: "", contact: "", email: "", sex: "", race: "" });
+                    } else setRegMsg("Error: " + (data.error || "Unknown error"));
+                  } catch { setRegMsg("Failed to save. Try again."); }
+                  setRegSaving(false);
+                }} disabled={regSaving}
+                  style={{ padding: "12px 24px", fontSize: 14, fontFamily: font, fontWeight: 600, color: "#fff", background: colors.accent, border: "none", borderRadius: 10, cursor: "pointer" }}>
+                  {regSaving ? "Saving..." : regMode === "edit" ? "Update Registration" : "Submit Registration"}
+                </button>
+                {regMode === "edit" && (
+                  <button onClick={() => { setRegMode("new"); setRegForm({ year: "2026", class: "", name: "", ic: "", contact: "", email: "", sex: "", race: "" }); setRegMsg(""); setRegLookupIc(""); }}
+                    style={{ padding: "12px 24px", fontSize: 14, fontFamily: font, fontWeight: 500, color: colors.textMuted, background: "none", border: `1px solid ${colors.border}`, borderRadius: 10, cursor: "pointer" }}>
+                    New Registration
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -890,10 +1030,9 @@ export default function MUETMarks() {
       <BgPattern />
       {showConfirm && <ConfirmDialog klass={klass} exam={exam} onConfirm={doSubmit} onCancel={() => setShowConfirm(false)} />}
 
-      {page === "landing" && <LandingPage onTeacher={() => setPage("teacherLogin")} onStudent={() => setPage("student")} onRegister={() => setPage("register")} />}
+      {page === "landing" && <LandingPage onTeacher={() => setPage("teacherLogin")} onStudent={() => setPage("student")} />}
       {page === "teacherLogin" && <TeacherLogin onAuth={() => setPage("teacher")} onBack={() => setPage("landing")} />}
       {page === "student" && <StudentView onHome={goHome} />}
-      {page === "register" && <RegisterView onHome={goHome} />}
       {page === "analysis" && <AnalysisDashboard onBack={() => setPage("teacher")} appsScriptUrl={CONFIG.APPS_SCRIPT_URL} SchoolLogo={SchoolLogo} />}
 
       {page === "teacher" && (
