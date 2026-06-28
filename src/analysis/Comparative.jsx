@@ -1,109 +1,200 @@
+// ============================================================
+// ANALYSIS - COMPARATIVE PAGE (Admin-gated)
+// ============================================================
 import { useState } from "react";
-import { Card, SectionTitle, BandBadge, Reveal, thStyle, tdStyle,
-  colors, font, monoFont, displayFont, computeStats, getBand, bandColor, BAND_ORDER, NATIONAL_BENCHMARK, safeNum } from "./shared.jsx";
+import { Card, SectionTitle, BandBadge, StatCard, thStyle, tdStyle,
+  colors, font, displayFont, computeStats, getBand, bandColor, BAND_ORDER, NATIONAL_BENCHMARK, safeNum } from "./shared.jsx";
+
+const ADMIN_PASSWORD = "admin2026";
 
 export default function Comparative({ allStudents, exams, classes }) {
-  var [pw, setPw] = useState("");
-  var [unlocked, setUnlocked] = useState(false);
-  var students = allStudents || [];
-  var examList = exams || [];
-  var classList = classes || [];
+  const [password, setPassword] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+  const [error, setError] = useState("");
 
-  if (!unlocked) return (
-    <Card>
-      <div style={{ textAlign: "center", padding: "30px 20px" }}>
-        <SectionTitle>Admin Access Required</SectionTitle>
-        <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, marginBottom: 16 }}>Enter admin password to view comparative data.</p>
-        <div style={{ display: "flex", gap: 8, justifyContent: "center", maxWidth: 300, margin: "0 auto" }}>
-          <input type="password" value={pw} onChange={function(e) { setPw(e.target.value); }} placeholder="Password"
-            onKeyDown={function(e) { if (e.key === "Enter" && pw === "admin2026") setUnlocked(true); }}
-            style={{ flex: 1, padding: "8px 12px", fontSize: 13, fontFamily: font, border: "1px solid " + colors.border, borderRadius: 6, outline: "none", background: colors.cardAlt, boxSizing: "border-box" }} />
-          <button onClick={function() { if (pw === "admin2026") setUnlocked(true); }}
-            style={{ padding: "8px 16px", fontSize: 12, fontFamily: monoFont, fontWeight: 500, color: "#fff", background: colors.accent, border: "none", borderRadius: 6, cursor: "pointer", letterSpacing: "0.02em" }}>unlock</button>
+  const handleAuth = () => {
+    if (password === ADMIN_PASSWORD) {
+      setAuthenticated(true);
+      setError("");
+    } else {
+      setError("Incorrect password.");
+    }
+  };
+
+  if (!authenticated) {
+    return (
+      <Card>
+        <div style={{ maxWidth: 340, margin: "40px auto", textAlign: "center" }}>
+          <SectionTitle>Admin Access Required</SectionTitle>
+          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, marginBottom: 16 }}>
+            Comparative data contains sensitive teacher performance metrics. Enter admin password to continue.
+          </p>
+          <input type="password" placeholder="Admin password" value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAuth()}
+            style={{
+              width: "100%", padding: "12px 14px", fontSize: 14, fontFamily: font,
+              border: `1.5px solid ${error ? colors.error : colors.border}`, borderRadius: 10,
+              background: colors.bg, color: colors.text, outline: "none", boxSizing: "border-box", marginBottom: 12,
+            }}
+          />
+          {error && <p style={{ fontFamily: font, fontSize: 12, color: colors.error, marginBottom: 12 }}>{error}</p>}
+          <button onClick={handleAuth} style={{
+            fontFamily: font, fontSize: 14, fontWeight: 600, color: "#fff",
+            background: colors.accent, border: "none", borderRadius: 10, padding: "12px 24px",
+            cursor: "pointer", width: "100%",
+          }}>Unlock</button>
         </div>
-      </div>
-    </Card>
-  );
+      </Card>
+    );
+  }
 
-  var latestExam = examList[examList.length - 1];
-  var latestStudents = students.filter(function(s) { return s.exam === latestExam; });
+  // -- Use latest exam for comparison --
+  const latestExam = exams[exams.length - 1];
+  const latestStudents = allStudents.filter(s => s.exam === latestExam);
 
-  var classRanking = classList.map(function(cls) {
-    var cs = latestStudents.filter(function(s) { return s.class === cls; });
+  // -- Class ranking --
+  const classRanking = classes.map(cls => {
+    const cs = latestStudents.filter(s => s.class === cls);
     if (cs.length === 0) return null;
-    return Object.assign({ class: cls }, computeStats(cs));
-  }).filter(Boolean).sort(function(a, b) { return b.overall - a.overall; });
+    const stats = computeStats(cs);
+    return { class: cls, ...stats };
+  }).filter(Boolean).sort((a, b) => b.overall - a.overall);
 
-  var bandDist = {};
-  latestStudents.forEach(function(s) { var b = s.band || "-"; bandDist[b] = (bandDist[b] || 0) + 1; });
-  var total = latestStudents.length || 1;
-  var benchmarkData = BAND_ORDER.map(function(b) {
-    var school = Math.round(((bandDist[b] || 0) / total) * 100);
-    return { band: b, school: school, national: NATIONAL_BENCHMARK[b] || 0 };
-  });
+  // -- Band distribution vs national benchmark --
+  const totalLatest = latestStudents.length;
+  const bandDist = {};
+  latestStudents.forEach(s => { const b = s.band || "-"; bandDist[b] = (bandDist[b] || 0) + 1; });
+
+  // -- Teacher performance (group by teacher if data has teacher field) --
+  const hasTeacherData = latestStudents.some(s => s.teacher);
+  const teacherStats = hasTeacherData ? (() => {
+    const teachers = {};
+    latestStudents.forEach(s => {
+      if (!s.teacher) return;
+      if (!teachers[s.teacher]) teachers[s.teacher] = [];
+      teachers[s.teacher].push(s);
+    });
+    return Object.entries(teachers).map(([teacher, students]) => {
+      const stats = computeStats(students);
+      return { teacher, ...stats };
+    }).sort((a, b) => b.overall - a.overall);
+  })() : [];
 
   return (
     <div>
-      <Reveal>
+      {/* Latest exam context */}
+      <Card style={{ marginBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <SectionTitle>Comparative Analysis</SectionTitle>
+            <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted }}>Based on: {latestExam} ({totalLatest} students)</p>
+          </div>
+          <button onClick={() => setAuthenticated(false)} style={{
+            fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.textMuted,
+            background: "none", border: `1px solid ${colors.border}`, borderRadius: 8,
+            padding: "6px 14px", cursor: "pointer",
+          }}>Lock</button>
+        </div>
+      </Card>
+
+      {/* Class ranking */}
+      {classRanking.length > 0 && (
         <Card style={{ marginBottom: 16 }}>
-          <SectionTitle>Class Ranking ({latestExam ? latestExam.replace("Ujian Bulanan ", "UB ") : "latest"})</SectionTitle>
-          {classRanking.length === 0 ? <p style={{ fontFamily: monoFont, fontSize: 12, color: colors.textMuted, textAlign: "center" }}>no data</p> : (
-            <div style={{ overflow: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead><tr>
-                  {["#", "Class", "N", "Avg", "Band", "R", "L", "S", "W"].map(function(h) {
-                    return <th key={h} style={Object.assign({}, thStyle, { textAlign: h === "Class" ? "left" : "center" })}>{h}</th>;
-                  })}
-                </tr></thead>
-                <tbody>
-                  {classRanking.map(function(c, i) {
-                    return (
-                      <tr key={c.class}>
-                        <td style={Object.assign({}, tdStyle, { fontFamily: monoFont, color: colors.textMuted })}>{i + 1}</td>
-                        <td style={Object.assign({}, tdStyle, { textAlign: "left", fontWeight: 600 })}>{c.class}</td>
-                        <td style={Object.assign({}, tdStyle, { color: colors.textMuted })}>{c.total}</td>
-                        <td style={Object.assign({}, tdStyle, { fontWeight: 700, fontFamily: monoFont, color: colors.accent })}>{c.overall}</td>
-                        <td style={tdStyle}><BandBadge band={c.band.band} /></td>
-                        {c.components.map(function(comp) { return <td key={comp.name} style={Object.assign({}, tdStyle, { fontFamily: monoFont })}>{comp.avg}</td>; })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
-      </Reveal>
-      <Reveal delay={0.1}>
-        <Card>
-          <SectionTitle>Band Distribution vs National Benchmark</SectionTitle>
+          <SectionTitle>Class Ranking</SectionTitle>
           <div style={{ overflow: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead><tr>
-                <th style={Object.assign({}, thStyle, { textAlign: "left" })}>Band</th>
-                <th style={thStyle}>School %</th>
-                <th style={thStyle}>National %</th>
-                <th style={thStyle}>Diff</th>
-              </tr></thead>
+              <thead>
+                <tr>
+                  {["#", "Class", "Students", "Avg Score", "Band", "Reading", "Listening", "Speaking", "Writing"].map(h => (
+                    <th key={h} style={{ ...thStyle, textAlign: h === "Class" ? "left" : "center" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
               <tbody>
-                {benchmarkData.map(function(b) {
-                  var diff = b.school - b.national;
-                  return (
-                    <tr key={b.band}>
-                      <td style={Object.assign({}, tdStyle, { textAlign: "left" })}><BandBadge band={b.band} /></td>
-                      <td style={Object.assign({}, tdStyle, { fontFamily: monoFont, fontWeight: 600 })}>{b.school}%</td>
-                      <td style={Object.assign({}, tdStyle, { fontFamily: monoFont, color: colors.textMuted })}>{b.national}%</td>
-                      <td style={Object.assign({}, tdStyle, { fontFamily: monoFont, fontWeight: 600, color: diff >= 0 ? colors.accent : colors.band1 })}>
-                        {diff >= 0 ? "+" : ""}{diff}%
-                      </td>
-                    </tr>
-                  );
-                })}
+                {classRanking.map((c, i) => (
+                  <tr key={c.class} style={{ background: i === 0 ? colors.accentLight : "transparent" }}>
+                    <td style={{ ...tdStyle, fontWeight: 700, color: i === 0 ? colors.accent : colors.textMuted }}>{i + 1}</td>
+                    <td style={{ ...tdStyle, textAlign: "left", fontWeight: 600 }}>{c.class}</td>
+                    <td style={{ ...tdStyle, color: colors.textMuted }}>{c.total}</td>
+                    <td style={{ ...tdStyle, fontWeight: 700, color: colors.accent }}>{c.overall}</td>
+                    <td style={tdStyle}><BandBadge band={c.band.band} /></td>
+                    {c.components.map(comp => (
+                      <td key={comp.name} style={tdStyle}>{comp.avg}</td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </Card>
-      </Reveal>
+      )}
+
+      {/* Teacher performance (if data available) */}
+      {teacherStats.length > 0 && (
+        <Card style={{ marginBottom: 16 }}>
+          <SectionTitle>Teacher Performance</SectionTitle>
+          <div style={{ overflow: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  {["Teacher", "Students", "Avg Score", "Band", "Weakest"].map(h => (
+                    <th key={h} style={{ ...thStyle, textAlign: h === "Teacher" ? "left" : "center" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {teacherStats.map(t => (
+                  <tr key={t.teacher}>
+                    <td style={{ ...tdStyle, textAlign: "left", fontWeight: 500 }}>{t.teacher}</td>
+                    <td style={{ ...tdStyle, color: colors.textMuted }}>{t.total}</td>
+                    <td style={{ ...tdStyle, fontWeight: 700, color: colors.accent }}>{t.overall}</td>
+                    <td style={tdStyle}><BandBadge band={t.band.band} /></td>
+                    <td style={{ ...tdStyle, color: colors.band1, fontWeight: 600 }}>{t.weakest.name} ({t.weakest.avg})</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* National benchmark comparison */}
+      <Card>
+        <SectionTitle>Band Distribution vs National Benchmark</SectionTitle>
+        <div style={{ overflow: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr>
+                <th style={{ ...thStyle, textAlign: "left" }}>Band</th>
+                {BAND_ORDER.map(b => <th key={b} style={thStyle}>{b}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ ...tdStyle, textAlign: "left", fontSize: 11, fontWeight: 600 }}>School %</td>
+                {BAND_ORDER.map(b => {
+                  const count = bandDist[b] || 0;
+                  const pct = totalLatest > 0 ? Math.round((count / totalLatest) * 100) : 0;
+                  const natPct = NATIONAL_BENCHMARK[b] || 0;
+                  return (
+                    <td key={b} style={{ ...tdStyle, fontWeight: 700, color: pct < natPct ? colors.band1 : colors.accent }}>
+                      {pct}%
+                    </td>
+                  );
+                })}
+              </tr>
+              <tr>
+                <td style={{ ...tdStyle, textAlign: "left", fontSize: 11, color: colors.textMuted }}>National %</td>
+                {BAND_ORDER.map(b => <td key={b} style={{ ...tdStyle, color: colors.textMuted }}>{NATIONAL_BENCHMARK[b] || 0}%</td>)}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontFamily: font, fontSize: 10, color: colors.textMuted, marginTop: 8, fontStyle: "italic" }}>
+          Green = above national average, Red = below national average
+        </p>
+      </Card>
     </div>
   );
 }

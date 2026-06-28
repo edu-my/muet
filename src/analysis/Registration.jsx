@@ -2,7 +2,7 @@
 // ANALYSIS - STUDENT REGISTRATION FORM + LIST
 // ============================================================
 import { useState, useEffect, useMemo } from "react";
-import { Card, SectionTitle, Reveal, colors, font, monoFont, displayFont, safeNum, thStyle, tdStyle } from "./shared.jsx";
+import { Card, SectionTitle, colors, font, displayFont, safeNum, thStyle, tdStyle } from "./shared.jsx";
 
 var str = function(v) { return v == null ? "" : String(v); };
 
