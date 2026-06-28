@@ -104,14 +104,25 @@ const parseExcel = async (file) => {
           students.push({ ...raw, ...calcScores(raw) });
         }
         if (students.length === 0) { reject(new Error("No student data found.")); return; }
-        let teacherName = "", className = "";
+        let teacherName = "", className = "", examName = "";
         for (let i = 0; i < headerIdx; i++) {
           const row = rows[i]; if (!row) continue;
           const joined = row.map(c => String(c || "")).join(" ").toUpperCase();
+          // Format 1: "NAME: value" in a single cell
           if (joined.includes("NAME:")) { const m = joined.match(/NAME:\s*(.+)/); if (m) teacherName = m[1].trim(); }
           if (joined.includes("CLASS:")) { const m = joined.match(/CLASS:\s*(.+)/); if (m) className = m[1].replace(/\./g, "").trim(); }
+          // Format 2: Column A = label, Column B = value (no colon)
+          const a = String(row[0] || "").trim().toUpperCase();
+          const b = String(row[1] || "").trim();
+          if (a === "NAME" && b) teacherName = b;
+          if (a === "CLASS" && b) className = b.replace(/\./g, "").trim();
+          // Exam detection: look for known exam keywords in the row
+          if (!examName && (joined.includes("UJIAN") || joined.includes("PEPERIKSAAN") || joined.includes("EXAM"))) {
+            const cell = String(row[0] || "").trim();
+            if (cell) examName = cell;
+          }
         }
-        resolve({ students, meta: { teacherName, className }, hasIC: colMap.ic !== undefined });
+        resolve({ students, meta: { teacherName, className, examName }, hasIC: colMap.ic !== undefined });
       } catch (err) { reject(err); }
     };
     reader.onerror = () => reject(new Error("Failed to read file"));
@@ -201,38 +212,127 @@ const headerBtnStyle = {
 };
 
 // ============================================================
-// LANDING PAGE
+// LANDING PAGE - Oberon-inspired editorial layout
 // ============================================================
 const LandingPage = ({ onTeacher, onStudent }) => {
-  const cardBase = {
-    background: colors.card, borderRadius: 12, padding: "36px 28px",
-    border: `1px solid ${colors.border}`,
-    cursor: "pointer", transition: "all 0.25s", textAlign: "center", flex: "1 1 260px", maxWidth: 320,
+  const section = { padding: "36px 0", borderBottom: `1px solid ${colors.border}` };
+  const num = { fontFamily: monoFont, fontSize: 11, color: colors.accent, letterSpacing: "0.04em", marginBottom: 6 };
+  const micro = { fontFamily: monoFont, fontSize: 9, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.1em" };
+  const entryBase = {
+    background: colors.card, border: `1px solid ${colors.border}`, borderRadius: 12,
+    padding: "22px 20px", cursor: "pointer", transition: "all 0.25s", position: "relative", overflow: "hidden",
   };
-  const hoverIn = (e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-3px)"; };
-  const hoverOut = (e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; };
+  const featureBox = {
+    padding: "16px 18px", borderRadius: 8, background: colors.cardAlt, border: `1px solid ${colors.borderLight}`,
+  };
+
   return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", padding: 24, position: "relative", zIndex: 1 }}>
-      <Logo size="large" />
-      <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", maxWidth: 680, width: "100%" }}>
-        <div style={cardBase} onClick={onTeacher} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
-          <span style={{ fontFamily: monoFont, fontSize: 10, color: colors.accent, letterSpacing: "0.04em" }}>01</span>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.accentMuted, display: "flex", alignItems: "center", justifyContent: "center", margin: "12px auto 16px" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+    <div style={{ minHeight: "100vh", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px" }}>
+
+        {/* HERO */}
+        <div style={{ ...section, paddingTop: 48, textAlign: "center" }}>
+          <SchoolLogo size={64} />
+          <p style={{ ...micro, marginTop: 14, marginBottom: 8 }}>marks management system</p>
+          <h1 style={{ fontFamily: displayFont, fontSize: 32, fontWeight: 700, color: colors.text, letterSpacing: "-0.02em", marginBottom: 8 }}>MUET Marks</h1>
+          <p style={{ fontFamily: font, fontSize: 13, color: colors.textMuted, marginBottom: 28 }}>{CONFIG.SCHOOL}, Keningau</p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, maxWidth: 440, margin: "0 auto" }}>
+            {[{ v: "4", l: "components tracked" }, { v: "360", l: "total marks" }, { v: "5+", l: "band levels" }].map(s => (
+              <div key={s.l} style={{ textAlign: "center", background: colors.cardAlt, borderRadius: 8, padding: "14px 10px", border: `1px solid ${colors.borderLight}` }}>
+                <p style={{ fontFamily: displayFont, fontSize: 28, fontWeight: 700, color: colors.accent }}>{s.v}</p>
+                <p style={{ fontFamily: monoFont, fontSize: 9, color: colors.textMuted, textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 2 }}>{s.l}</p>
+              </div>
+            ))}
           </div>
-          <h2 style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: colors.text, marginBottom: 6 }}>Teacher</h2>
-          <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, lineHeight: 1.5 }}>Upload marks and manage the system</p>
         </div>
-        <div style={cardBase} onClick={onStudent} onMouseEnter={hoverIn} onMouseLeave={hoverOut}>
-          <span style={{ fontFamily: monoFont, fontSize: 10, color: colors.accent, letterSpacing: "0.04em" }}>02</span>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: colors.accentMuted, display: "flex", alignItems: "center", justifyContent: "center", margin: "12px auto 16px" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+
+        {/* MARQUEE */}
+        <div style={{ overflow: "hidden", padding: "10px 0", borderBottom: `1px solid ${colors.border}` }}>
+          <div style={{ display: "flex", gap: 32, animation: "marquee 20s linear infinite", whiteSpace: "nowrap" }}>
+            {["Reading", "Listening", "Speaking", "Writing", "Band Analysis", "Progress Tracking", "Intervention Groups", "Class Comparison",
+              "Reading", "Listening", "Speaking", "Writing", "Band Analysis", "Progress Tracking", "Intervention Groups", "Class Comparison"].map((item, i) => (
+              <span key={i} style={{ fontFamily: monoFont, fontSize: 10, color: colors.textLight, textTransform: "uppercase", letterSpacing: "0.08em", display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 4, height: 4, borderRadius: "50%", background: colors.accent, opacity: 0.4 }} />
+                {item}
+              </span>
+            ))}
           </div>
-          <h2 style={{ fontFamily: font, fontSize: 16, fontWeight: 600, color: colors.text, marginBottom: 6 }}>Student</h2>
-          <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, lineHeight: 1.5 }}>View results, register for MUET</p>
         </div>
+
+        {/* ENTRY POINTS */}
+        <div style={section}>
+          <p style={num}>01</p>
+          <p style={{ ...micro, marginBottom: 16 }}>get started</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div style={entryBase} onClick={onTeacher}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; }}>
+              <span style={{ position: "absolute", top: 20, right: 20, fontSize: 16, color: colors.textLight, transition: "all 0.2s" }}>&rarr;</span>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: colors.accentMuted, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+              </div>
+              <h3 style={{ fontFamily: font, fontSize: 15, fontWeight: 600, color: colors.text, marginBottom: 4 }}>Teacher</h3>
+              <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, lineHeight: 1.5 }}>Upload marks, track progress, identify at-risk students, and generate reports.</p>
+            </div>
+            <div style={entryBase} onClick={onStudent}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = colors.accent; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.transform = "translateY(0)"; }}>
+              <span style={{ position: "absolute", top: 20, right: 20, fontSize: 16, color: colors.textLight, transition: "all 0.2s" }}>&rarr;</span>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: colors.accentMuted, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+              </div>
+              <h3 style={{ fontFamily: font, fontSize: 15, fontWeight: 600, color: colors.text, marginBottom: 4 }}>Student</h3>
+              <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, lineHeight: 1.5 }}>View your results by component, register for MUET, and track your band progress.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* FOR TEACHERS */}
+        <div style={section}>
+          <p style={num}>02</p>
+          <p style={{ ...micro, marginBottom: 6 }}>for teachers</p>
+          <h2 style={{ fontFamily: displayFont, fontSize: 20, fontWeight: 700, color: colors.text, marginBottom: 14 }}>Know exactly where to intervene</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {[
+              { t: "Component-level weakness", d: "Spot which skill is dragging scores down, across individuals or whole classes." },
+              { t: "Intervention groups", d: "Students automatically sorted by weakest component. No more guessing who needs what." },
+              { t: "Progress across exams", d: "See if your teaching strategies are actually working, exam over exam." },
+              { t: "Controlled release", d: "Release results on the scheduled date. Toggle visibility per exam." },
+            ].map(f => (
+              <div key={f.t} style={featureBox}>
+                <p style={{ fontFamily: font, fontSize: 12, fontWeight: 600, color: colors.text, marginBottom: 3 }}>{f.t}</p>
+                <p style={{ fontFamily: font, fontSize: 11, color: colors.textMuted, lineHeight: 1.5 }}>{f.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* FOR STUDENTS */}
+        <div style={{ ...section, borderBottom: "none" }}>
+          <p style={num}>03</p>
+          <p style={{ ...micro, marginBottom: 6 }}>for students</p>
+          <h2 style={{ fontFamily: displayFont, fontSize: 20, fontWeight: 700, color: colors.text, marginBottom: 14 }}>Understand your score, not just see it</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {[
+              { t: "Band breakdown", d: "See exactly how Reading, Listening, Speaking, and Writing contribute to your band." },
+              { t: "Gap to next band", d: "Know how many marks you need and which component to focus on." },
+              { t: "Self-service registration", d: "Register for MUET directly. No forms to print, no paperwork." },
+              { t: "Exam history", d: "Track your progress across multiple assessments in one view." },
+            ].map(f => (
+              <div key={f.t} style={featureBox}>
+                <p style={{ fontFamily: font, fontSize: 12, fontWeight: 600, color: colors.text, marginBottom: 3 }}>{f.t}</p>
+                <p style={{ fontFamily: font, fontSize: 11, color: colors.textMuted, lineHeight: 1.5 }}>{f.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <p style={{ fontFamily: monoFont, fontSize: 9, color: colors.textLight, letterSpacing: "0.06em", textAlign: "center", padding: "20px 0 32px" }}>
+          muet marks &middot; {CONFIG.SCHOOL.toLowerCase()} &middot; 2026
+        </p>
       </div>
-      <p style={{ fontFamily: monoFont, fontSize: 9, color: colors.textLight, marginTop: 40, letterSpacing: "0.06em" }}>muet marks &middot; {CONFIG.SCHOOL.toLowerCase()} &middot; 2026</p>
     </div>
   );
 };
@@ -980,6 +1080,7 @@ export default function MUETMarks() {
       if (!result.hasIC) setNoICWarning(true);
       if (result.meta.teacherName && !teacher) { const match = TEACHERS.find(t => t.toUpperCase().includes(result.meta.teacherName.toUpperCase())); if (match) setTeacher(match); }
       if (result.meta.className && !klass) { const match = CLASSES.find(c => c.toUpperCase().replace(/\s/g, "") === result.meta.className.toUpperCase().replace(/\s/g, "")); if (match) setKlass(match); }
+      if (result.meta.examName && !exam) { const match = EXAMS.find(e => e.toUpperCase().replace(/\s/g, "").includes(result.meta.examName.toUpperCase().replace(/\s/g, "")) || result.meta.examName.toUpperCase().replace(/\s/g, "").includes(e.toUpperCase().replace(/\s/g, ""))); if (match) setExam(match); }
     } catch (err) { setParseError(err.message); }
     setLoading(false);
   };
