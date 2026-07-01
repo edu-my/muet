@@ -40,13 +40,13 @@ const getBand = (score) => {
   return { band: "-", cefr: "-" };
 };
 
-const r2 = (v) => Math.round(v * 100) / 100;
+const r2 = (v) => Math.round(v);
 const calcScores = (raw) => {
-  const t1Score = r2((raw.rd / 40) * 90);
-  const t2Score = r2((raw.l / 30) * 90);
-  const t3Score = r2(((raw.spId + raw.spGr) / 150) * 90);
-  const t4Score = r2(raw.wT1 + raw.wT2);
-  const overall = r2(t1Score + t2Score + t3Score + t4Score);
+  const t1Score = Math.round((raw.rd / 40) * 90);
+  const t2Score = Math.round((raw.l / 30) * 90);
+  const t3Score = Math.round(((raw.spId + raw.spGr) / 150) * 90);
+  const t4Score = Math.round(raw.wT1 + raw.wT2);
+  const overall = t1Score + t2Score + t3Score + t4Score;
   const bandInfo = getBand(overall);
   return { t1Score, t2Score, t3Score, t4Score, overall, band: bandInfo.band, cefr: bandInfo.cefr };
 };
