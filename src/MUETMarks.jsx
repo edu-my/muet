@@ -454,7 +454,7 @@ const PreviewTable = ({ students }) => {
               {hasIC && <td style={{ ...tdStyle, fontSize: 9 }}>{s.ic}</td>}
               <td style={tdStyle}>{s.rd}</td><td style={tdCalc}>{s.t1Score}</td>
               <td style={tdStyle}>{s.l}</td><td style={tdCalc}>{s.t2Score}</td>
-              <td style={tdStyle}>{r2(s.spId)}</td><td style={tdStyle}>{r2(s.spGr)}</td><td style={tdCalc}>{s.t3Score}</td>
+              <td style={tdStyle}>{Math.round(s.spId)}</td><td style={tdStyle}>{Math.round(s.spGr)}</td><td style={tdCalc}>{s.t3Score}</td>
               <td style={tdStyle}>{s.wT1}</td><td style={tdStyle}>{s.wT2}</td><td style={tdCalc}>{s.t4Score}</td>
               <td style={tdOverall}>{s.overall}</td>
               <td style={tdStyle}><BandBadge band={s.band} /></td>
