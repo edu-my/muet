@@ -124,10 +124,13 @@ export default function Registration({ appsScriptUrl, classes }) {
   var handleDownload = function() {
     var headers = ["No", "Year", "Class", "Name", "IC No.", "Contact", "Email", "Sex", "Race"];
     var rows = filtered.map(function(r, i) {
-      return [String(i + 1), str(r.year), str(r.class), str(r.name), str(r.ic), str(r.contact), str(r.email), str(r.sex), str(r.race)];
+      return [String(i + 1), str(r.year), str(r.class), str(r.name), '="' + str(r.ic) + '"', '="' + str(r.contact) + '"', str(r.email), str(r.sex), str(r.race)];
     });
     var csv = [headers.join(",")].concat(rows.map(function(row) {
-      return row.map(function(cell) { return '"' + cell.replace(/"/g, '""') + '"'; }).join(",");
+      return row.map(function(cell) {
+        if (cell.startsWith('="')) return cell;
+        return '"' + cell.replace(/"/g, '""') + '"';
+      }).join(",");
     })).join("\n");
     var blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     var url = URL.createObjectURL(blob);
