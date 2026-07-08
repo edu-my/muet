@@ -116,6 +116,24 @@ export default function Registration({ appsScriptUrl, classes }) {
       .catch(function() { setMsg("Failed to save."); setSaving(false); });
   };
 
+  var handleRemove = function(record) {
+    var id = str(record.ic) || str(record.name);
+    if (!confirm("Remove " + str(record.name) + " from the registration list?")) return;
+    setMsg("");
+    fetch(appsScriptUrl, {
+      method: "POST",
+      body: JSON.stringify({ action: "remove_registration", removeIC: id }),
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          setMsg("Removed successfully.");
+          fetchRecords();
+        } else { setMsg("Error: " + (data.error || "Failed to remove.")); }
+      })
+      .catch(function() { setMsg("Failed to remove."); });
+  };
+
   var handleEdit = function(record) {
     setForm({ year: str(record.year) || "2026", class: str(record.class), name: str(record.name), ic: str(record.ic), contact: str(record.contact), email: str(record.email), sex: str(record.sex), race: str(record.race) });
     setEditing(str(record.ic) || str(record.name)); setTab("form");
@@ -268,11 +286,17 @@ export default function Registration({ appsScriptUrl, classes }) {
                         </div>
                       </div>
 
-                      {/* Edit button */}
-                      <button onClick={function(e) { e.stopPropagation(); handleEdit(r); }}
-                        style={{ fontFamily: monoFont, fontSize: 10, color: colors.accent, background: "none", border: "1px solid " + colors.accent, borderRadius: 4, padding: "4px 10px", cursor: "pointer", flexShrink: 0, letterSpacing: "0.02em" }}>
-                        edit
-                      </button>
+                      {/* Edit + Remove buttons */}
+                      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                        <button onClick={function(e) { e.stopPropagation(); handleEdit(r); }}
+                          style={{ fontFamily: monoFont, fontSize: 10, color: colors.accent, background: "none", border: "1px solid " + colors.accent, borderRadius: 4, padding: "4px 10px", cursor: "pointer", letterSpacing: "0.02em" }}>
+                          edit
+                        </button>
+                        <button onClick={function(e) { e.stopPropagation(); handleRemove(r); }}
+                          style={{ fontFamily: monoFont, fontSize: 10, color: colors.error, background: "none", border: "1px solid " + colors.error, borderRadius: 4, padding: "4px 10px", cursor: "pointer", letterSpacing: "0.02em" }}>
+                          remove
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
