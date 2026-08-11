@@ -25,6 +25,8 @@ export default function Registration({ appsScriptUrl, classes }) {
   var [overIdx, setOverIdx] = useState(null);
   var [orderChanged, setOrderChanged] = useState(false);
   var [savingOrder, setSavingOrder] = useState(false);
+  var [posInputs, setPosInputs] = useState({}); // per-card "move to position" input values
+  var scrollTimer = useRef(null);
   var classList = classes || [];
 
   useEffect(function() { fetchRecords(); }, [appsScriptUrl]);
@@ -55,8 +57,23 @@ export default function Registration({ appsScriptUrl, classes }) {
 
   // Drag handlers
   var handleDragStart = function(i) { setDragIdx(i); };
-  var handleDragOver = function(e, i) { e.preventDefault(); setOverIdx(i); };
+  var handleDragOver = function(e, i) {
+    e.preventDefault();
+    setOverIdx(i);
+
+    // Auto-scroll when dragging near top/bottom of viewport
+    var margin = 90, speed = 18;
+    var y = e.clientY;
+    var vh = window.innerHeight;
+    if (scrollTimer.current) { clearInterval(scrollTimer.current); scrollTimer.current = null; }
+    if (y < margin) {
+      scrollTimer.current = setInterval(function() { window.scrollBy(0, -speed); }, 16);
+    } else if (y > vh - margin) {
+      scrollTimer.current = setInterval(function() { window.scrollBy(0, speed); }, 16);
+    }
+  };
   var handleDragEnd = function() {
+    if (scrollTimer.current) { clearInterval(scrollTimer.current); scrollTimer.current = null; }
     if (dragIdx !== null && overIdx !== null && dragIdx !== overIdx) {
       var newFiltered = filtered.slice();
       var dragged = newFiltered.splice(dragIdx, 1)[0];
@@ -70,6 +87,24 @@ export default function Registration({ appsScriptUrl, classes }) {
     }
     setDragIdx(null);
     setOverIdx(null);
+  };
+
+  // Jump a card directly to a typed position (1-based), no dragging needed
+  var handleMoveToPosition = function(fromIdx, targetPos) {
+    var target = parseInt(targetPos, 10);
+    if (!target || target < 1 || target > filtered.length) return;
+    var targetIdx = target - 1;
+    if (targetIdx === fromIdx) return;
+
+    var newFiltered = filtered.slice();
+    var moved = newFiltered.splice(fromIdx, 1)[0];
+    newFiltered.splice(targetIdx, 0, moved);
+
+    var filteredSet = new Set(filtered.map(function(r) { return str(r.ic) + "|" + str(r.name); }));
+    var nonFiltered = records.filter(function(r) { return !filteredSet.has(str(r.ic) + "|" + str(r.name)); });
+    setRecords(newFiltered.concat(nonFiltered));
+    setOrderChanged(true);
+    setPosInputs(function(p) { var u = Object.assign({}, p); delete u[fromIdx]; return u; });
   };
 
   // Save reordered list back to Google Sheet
@@ -256,6 +291,25 @@ export default function Registration({ appsScriptUrl, classes }) {
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 28, flexShrink: 0 }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textLight} strokeWidth="2" strokeLinecap="round"><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/></svg>
                         <span style={{ fontFamily: monoFont, fontSize: 10, color: colors.textMuted, marginTop: 2 }}>{i + 1}</span>
+                      </div>
+
+                      {/* Move to position */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+                        <input type="number" min="1" max={filtered.length}
+                          value={posInputs[i] !== undefined ? posInputs[i] : ""}
+                          placeholder="#"
+                          onClick={function(e) { e.stopPropagation(); }}
+                          onChange={function(e) {
+                            var v = e.target.value;
+                            setPosInputs(function(p) { var u = Object.assign({}, p); u[i] = v; return u; });
+                          }}
+                          onKeyDown={function(e) { if (e.key === "Enter") handleMoveToPosition(i, posInputs[i]); }}
+                          style={{ width: 40, padding: "5px 4px", fontSize: 11, fontFamily: monoFont, textAlign: "center", border: "1px solid " + colors.border, borderRadius: 4, outline: "none", background: colors.cardAlt || colors.bg, color: colors.text }} />
+                        <button onClick={function(e) { e.stopPropagation(); handleMoveToPosition(i, posInputs[i]); }}
+                          title="Move to position"
+                          style={{ fontFamily: monoFont, fontSize: 10, color: colors.accent, background: "none", border: "1px solid " + colors.accent, borderRadius: 4, padding: "5px 7px", cursor: "pointer" }}>
+                          go
+                        </button>
                       </div>
 
                       {/* Main content */}
