@@ -680,9 +680,22 @@ const StudentView = ({ onHome }) => {
     if (!ic.trim()) return;
     setSearching(true); setError(""); setResults(null);
     try {
-      const url = `${CONFIG.APPS_SCRIPT_URL}?action=student_lookup&ic=${encodeURIComponent(ic.trim())}`;
-      const res = await fetch(url);
-      const data = await res.json();
+      // IC normalisation: spreadsheets often drop the leading zero (070317... -> 70317...),
+      // and students may type dashes/spaces. Try the likely stored forms in order.
+      const typed = ic.trim();
+      const digits = typed.replace(/\D/g, "");
+      const candidates = [];
+      if (digits.length >= 10 && digits.length <= 12) candidates.push(digits.padStart(12, "0")); // 070317120873
+      if (digits) candidates.push(digits.replace(/^0+/, "")); // 70317120873
+      candidates.push(typed); // exactly as typed
+      const uniq = candidates.filter((c, i) => c && candidates.indexOf(c) === i);
+
+      let data = { success: false, count: 0 };
+      for (const cand of uniq) {
+        const res = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=student_lookup&ic=${encodeURIComponent(cand)}`);
+        const d = await res.json();
+        if (d.success && d.count > 0) { data = d; break; }
+      }
       if (data.success && data.count > 0) {
         // Filter by released exams
         const releaseRes = await fetch(`${CONFIG.APPS_SCRIPT_URL}?action=get_release`);
