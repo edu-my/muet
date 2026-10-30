@@ -12,6 +12,17 @@ export default function Intervention({ students, classes }) {
   const interventionGroups = computeInterventionGroups(atRisk);
   const stats = computeStats(students);
 
+  // -- [SIM-GROUPS] Project each student after the slider boost (weakest component, capped at 90) --
+  const SCORE_KEY = { Reading: "t1Score", Listening: "t2Score", Speaking: "t3Score", Writing: "t4Score" };
+  const projectStudent = (s, comp) => {
+    const key = SCORE_KEY[comp];
+    const cur = safeNum(s[key]);
+    const boosted = Math.min(cur + simImprovement, 90);
+    const newOverall = Math.round(safeNum(s.overall) - cur + boosted);
+    const newBand = getBand(newOverall).band;
+    return { newOverall, newBand, clears: parseFloat(newBand) >= 3 };
+  };
+
   // -- Target simulator: what if at-risk students improve by X marks in weakest component? --
   const simulate = () => {
     if (!stats) return null;
@@ -70,19 +81,25 @@ export default function Intervention({ students, classes }) {
                   display: "flex", justifyContent: "space-between", alignItems: "center",
                 }}>
                   <span style={{ fontFamily: font, fontSize: 13, fontWeight: 700, color: group.length > 0 ? colors.band1 : colors.accent }}>{comp}</span>
-                  <span style={{ fontFamily: font, fontSize: 12, fontWeight: 600, color: colors.textMuted }}>{group.length} students</span>
+                  <span style={{ fontFamily: font, fontSize: 12, fontWeight: 600, color: colors.textMuted }}>
+                    {group.length} now &rarr; {group.filter(s => !projectStudent(s, comp).clears).length} after +{simImprovement}
+                  </span>
                 </div>
                 {group.length > 0 && (
                   <div style={{ padding: 12, maxHeight: 200, overflowY: "auto" }}>
                     {group.sort((a, b) => (a[comp === "Reading" ? "t1Score" : comp === "Listening" ? "t2Score" : comp === "Speaking" ? "t3Score" : "t4Score"] || 0) - (b[comp === "Reading" ? "t1Score" : comp === "Listening" ? "t2Score" : comp === "Speaking" ? "t3Score" : "t4Score"] || 0)).map((s, i) => {
                       const scoreKey = comp === "Reading" ? "t1Score" : comp === "Listening" ? "t2Score" : comp === "Speaking" ? "t3Score" : "t4Score";
                       const next = getNextBandThreshold(s.overall);
+                      const proj = projectStudent(s, comp);
                       return (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", borderBottom: i < group.length - 1 ? `1px solid ${colors.border}` : "none" }}>
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", opacity: proj.clears ? 0.55 : 1, borderBottom: i < group.length - 1 ? `1px solid ${colors.border}` : "none" }}>
                           <div>
                             <p style={{ fontFamily: font, fontSize: 12, fontWeight: 500, color: colors.text, margin: 0 }}>{s.name}</p>
                             <p style={{ fontFamily: font, fontSize: 10, color: colors.textMuted, margin: 0 }}>
                               {comp}: {Math.round(s[scoreKey])}/90 {next ? ` \u00B7 Need +${next.needed} for Band ${next.band}` : ""}
+                            </p>
+                            <p style={{ fontFamily: font, fontSize: 10, margin: 0, color: proj.clears ? colors.accent : colors.textMuted, fontWeight: proj.clears ? 700 : 400 }}>
+                              After +{simImprovement}: {proj.newOverall} (Band {proj.newBand}){proj.clears ? " \u2713 clears Band 3" : ""}
                             </p>
                           </div>
                           <BandBadge band={s.band} />
