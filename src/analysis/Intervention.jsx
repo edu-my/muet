@@ -8,7 +8,11 @@ import { Card, SectionTitle, BandBadge, Bar, thStyle, tdStyle,
 export default function Intervention({ students, classes }) {
   const [simImprovement, setSimImprovement] = useState(10);
 
-  const atRisk = students.filter(s => { const b = parseFloat(s.band); return b > 0 && b < 3; });
+  // -- [ABSENT-FILTER] A paper scored 0 means the student was absent, so they are not a real intervention case --
+  const belowBand3 = students.filter(s => { const b = parseFloat(s.band); return b > 0 && b < 3; });
+  const isAbsent = (s) => [s.t1Score, s.t2Score, s.t3Score, s.t4Score].some(v => safeNum(v) === 0);
+  const absentList = belowBand3.filter(isAbsent);
+  const atRisk = belowBand3.filter(s => !isAbsent(s));
   const interventionGroups = computeInterventionGroups(atRisk);
   const stats = computeStats(students);
 
@@ -46,11 +50,7 @@ export default function Intervention({ students, classes }) {
 
   const simStats = simulate();
   const currentAtRisk = atRisk.length;
-  const simAtRisk = simStats ? students.filter(s => {
-    const b = parseFloat(s.band);
-    if (b >= 3 || b <= 0) return false;
-    return true;
-  }).filter(s => {
+  const simAtRisk = simStats ? atRisk.filter(s => {
     const comps = [
       { name: "t1Score", val: s.t1Score || 0 },
       { name: "t2Score", val: s.t2Score || 0 },
@@ -113,6 +113,16 @@ export default function Intervention({ students, classes }) {
           </div>
         )}
       </Card>
+
+      {/* [ABSENT-NOTE] Students left out because they missed a paper */}
+      {absentList.length > 0 && (
+        <Card style={{ marginBottom: 16 }}>
+          <SectionTitle>Excluded: Absent for a Paper</SectionTitle>
+          <p style={{ fontFamily: font, fontSize: 12, color: colors.textMuted, margin: 0 }}>
+            Below Band 3 only because a paper scored 0, so they are not counted above: {absentList.map(s => s.name).join(", ")}.
+          </p>
+        </Card>
+      )}
 
       {/* Target simulator */}
       {atRisk.length > 0 && (
